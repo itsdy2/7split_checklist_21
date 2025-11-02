@@ -5,7 +5,7 @@
 """
 import os
 import importlib
-from strategies.base_strategy import BaseStrategy
+from .base_strategy import BaseStrategy
 
 AVAILABLE_STRATEGIES = {}
 

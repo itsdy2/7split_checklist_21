@@ -3,9 +3,9 @@
 7split_checklist_21 Plugin - Dividend Strategy
 안정적인 배당주 투자 전략
 """
-from strategies.base_strategy import BaseStrategy
-from logic import Logic
-from ..setup import *
+from .base_strategy import BaseStrategy  # 'strategies.base_strategy'를 '.base_strategy'로 변경
+from ..logic import Logic  # 'logic'을 '..logic'으로 변경
+from ..setup import * # 'from ..setup import *' 추가 (P.logger 사용을 위해)
 
 logger = P.logger      
 

@@ -3,10 +3,10 @@
 7split_checklist_21 Plugin - Seven Split Mini Strategy
 세븐스플릿 핵심 10개 조건 (빠른 스크리닝)
 """
-from strategies.base_strategy import BaseStrategy
-from logic import Logic
-from logic_calculator import Calculator
-from ..setup import *
+from .base_strategy import BaseStrategy  # 'strategies.base_strategy'를 '.base_strategy'로 변경
+from ..logic import Logic  # 'logic'을 '..logic'으로 변경
+from ..logic_calculator import Calculator  # 'logic_calculator'를 '..logic_calculator'로 변경
+from ..setup import * # 'from ..setup import *' 추가 (P.logger 사용을 위해)
 
 logger = P.logger   
 

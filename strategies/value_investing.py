@@ -3,9 +3,9 @@
 7split_checklist_21 Plugin - Value Investing Strategy
 벤저민 그레이엄 스타일 가치투자 전략
 """
-from strategies.base_strategy import BaseStrategy
-from logic import Logic
-from ..setup import *
+from .base_strategy import BaseStrategy  # 'strategies.base_strategy'를 '.base_strategy'로 변경
+from ..logic import Logic  # 'logic'을 '..logic'으로 변경
+from ..setup import * # 'from ..setup import *' 추가 (P.logger 사용을 위해)
 
 logger = P.logger      
 
