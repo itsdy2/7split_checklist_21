@@ -9,10 +9,7 @@ from datetime import datetime, date
 from framework import db, socketio
 from framework.logger import get_logger
 
-from model import ModelSetting, StockScreeningResult, ScreeningHistory, FilterDetail, ConditionSchedule
-from logic_collector import DataCollector
-from logic_calculator import Calculator
-from logic_notifier import Notifier
+
 
 logger = get_logger(__name__)
 package_name = '7split_checklist_21'
@@ -69,6 +66,7 @@ class Logic:
     @staticmethod
     def db_init():
         """DB 초기화"""
+        from model import ModelSetting
         try:
             for key, value in Logic.db_default.items():
                 if db.session.query(ModelSetting).filter_by(key=key).count() == 0:
@@ -83,6 +81,7 @@ class Logic:
     @staticmethod
     def get_setting(key):
         """설정 값 가져오기"""
+        from model import ModelSetting
         try:
             setting = db.session.query(ModelSetting).filter_by(key=key).first()
             if setting:
@@ -96,6 +95,7 @@ class Logic:
     @staticmethod
     def set_setting(key, value):
         """설정 값 저장"""
+        from model import ModelSetting
         try:
             setting = db.session.query(ModelSetting).filter_by(key=key).first()
             if setting:
@@ -136,6 +136,11 @@ class Logic:
         Returns:
             dict: 실행 결과
         """
+        from strategies import get_strategy
+        from model import StockScreeningResult, ScreeningHistory, FilterDetail, ModelSetting
+        from logic_collector import DataCollector
+        from logic_calculator import Calculator
+        from logic_notifier import Notifier
         start_time = time.time()
         from strategies import get_strategy
         
@@ -433,6 +438,7 @@ class Logic:
     @staticmethod
     def save_condition_schedules(schedules):
         """개별 조건 스케줄 저장"""
+        from model import ConditionSchedule
         try:
             # 기존 스케줄 모두 삭제
             db.session.query(ConditionSchedule).delete()
@@ -459,6 +465,9 @@ class Logic:
     @staticmethod
     def run_single_condition(strategy_id, condition_number):
         """단일 조건 실행"""
+        from strategies import get_strategy
+        from logic_collector import DataCollector
+        from logic_notifier import Notifier
         try:
             logger.info(f'Running single condition: {strategy_id} - {condition_number}')
             
@@ -508,6 +517,8 @@ class Logic:
     @staticmethod
     def scheduler_start():
         """스케줄러 시작"""
+        from framework.job import Job
+        from model import ConditionSchedule
         try:
             from framework.job import Job
             
@@ -549,6 +560,8 @@ class Logic:
     @staticmethod
     def scheduler_stop():
         """스케줄러 중지"""
+        from framework.job import Job
+        from model import ConditionSchedule
         try:
             from framework.job import Job
             Job.scheduler.remove_job(f'{package_name}_auto')

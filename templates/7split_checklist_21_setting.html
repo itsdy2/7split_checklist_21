@@ -204,7 +204,7 @@
                                     </div>
                                 </td>
                                 <td>
-                                    <button type="button" class="btn btn-sm btn-primary" onclick="saveConditionSchedule(this)">저장</button>
+
                                 </td>
                             </tr>
                             {% endfor %}
@@ -258,39 +258,6 @@ $(document).ready(function() {
         });
     });
 });
-    <script>
-function saveConditionSchedule(button) {
-    var row = $(button).closest('tr');
-    var strategy_id = row.find('input[name^="cron_"]').attr('name').split('_')[1];
-    var condition_number = row.find('input[name^="cron_"]').attr('name').split('_')[2];
-    var cron_expression = row.find('input[name^="cron_"]').val();
-    var is_enabled = row.find('input[name^="enabled_"]').is(':checked');
-
-    var data = {
-        schedules: [{
-            strategy_id: strategy_id,
-            condition_number: condition_number,
-            cron_expression: cron_expression,
-            is_enabled: is_enabled
-        }]
-    };
-
-    $.ajax({
-        url: '/7split_checklist_21/api/save_condition_schedules',
-        type: 'POST',
-        data: data,
-        success: function(response) {
-            if (response.success) {
-                notify('개별 조건 스케줄이 저장되었습니다.', 'success');
-            } else {
-                notify('저장 실패: ' + response.message, 'error');
-            }
-        },
-        error: function() {
-            notify('저장 중 오류가 발생했습니다.', 'error');
-        }
-    });
-}
-</script>
+    
 
 {% endblock %}

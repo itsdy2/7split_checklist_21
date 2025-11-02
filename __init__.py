@@ -4,14 +4,14 @@
 웹 인터페이스 라우팅
 """
 from flask import Blueprint, request, render_template, jsonify, redirect
-from framework import db
-from framework.logger import get_logger
+
+
 
 from .plugin import package_name
 from .model import ModelSetting, StockScreeningResult, ScreeningHistory, FilterDetail
 from .logic import Logic
 
-logger = get_logger(__name__)
+from .plugin import logger
 
 # Blueprint 생성
 blueprint = Blueprint(
@@ -57,7 +57,26 @@ def setting():
         try:
             # 설정 저장
             for key in request.form:
-                Logic.set_setting(key, request.form[key])
+                # 개별 조건 스케줄 관련 데이터는 여기서 처리하지 않음
+                if not (key.startswith('cron_') or key.startswith('enabled_')):
+                    Logic.set_setting(key, request.form[key])
+            
+            # 개별 조건 스케줄 저장
+            schedules = []
+            for key, value in request.form.items():
+                if key.startswith('cron_'):
+                    parts = key.split('_')
+                    strategy_id = parts[1]
+                    condition_number = int(parts[2])
+                    cron_expression = value
+                    is_enabled = request.form.get(f'enabled_{strategy_id}_{condition_number}') == 'True'
+                    schedules.append({
+                        'strategy_id': strategy_id,
+                        'condition_number': condition_number,
+                        'cron_expression': cron_expression,
+                        'is_enabled': is_enabled
+                    })
+            Logic.save_condition_schedules(schedules)
             
             # 스케줄러 재시작
             Logic.scheduler_stop()
@@ -448,33 +467,7 @@ def api_recent_history():
         return jsonify({'success': False, 'message': str(e)})
 
 
-@blueprint.route('/api/save_condition_schedules', methods=['POST'])
-def api_save_condition_schedules():
-    """개별 조건 스케줄 저장"""
-    try:
-        schedules = []
-        for key, value in request.form.items():
-            if key.startswith('cron_'):
-                parts = key.split('_')
-                strategy_id = parts[1]
-                condition_number = int(parts[2])
-                cron_expression = value
-                is_enabled = request.form.get(f'enabled_{strategy_id}_{condition_number}') == 'True'
-                schedules.append({
-                    'strategy_id': strategy_id,
-                    'condition_number': condition_number,
-                    'cron_expression': cron_expression,
-                    'is_enabled': is_enabled
-                })
-        
-        if Logic.save_condition_schedules(schedules):
-            return jsonify({'success': True, 'message': '개별 조건 스케줄이 저장되었습니다.'})
-        else:
-            return jsonify({'success': False, 'message': '개별 조건 스케줄 저장에 실패했습니다.'})
 
-    except Exception as e:
-        logger.error(f"Save condition schedules error: {str(e)}")
-        return jsonify({'success': False, 'message': str(e)})
 
 
 # 로그 페이지
