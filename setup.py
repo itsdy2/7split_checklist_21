@@ -3,9 +3,6 @@
 7split_checklist_21 Plugin Setup
 FlaskFarm 플러그인 설정
 """
-import traceback
-from plugin import * # 프레임워크의 plugin 모듈을 사용합니다.
-
 setting = {
     'filepath': __file__,
     'use_db': True,
@@ -16,21 +13,18 @@ setting = {
         'name': '세븐스플릿 스크리닝',
         'list': [
             {
-                'uri': 'base',
+                'uri': 'base/setting',
                 'name': '설정',
-                'list': [
-                    {'uri': 'setting', 'name': '설정'},
-                ]
             },
             {
                 'uri': 'screening',
                 'name': '스크리닝',
                 'list': [
-                    {'uri': 'strategies', 'name': '전략 선택'},
-                    {'uri': 'manual', 'name': '수동 실행'},
-                    {'uri': 'list', 'name': '결과 조회'},
-                    {'uri': 'history', 'name': '실행 이력'},
-                    {'uri': 'statistics', 'name': '통계'},
+                    {'uri': 'screening/strategies', 'name': '전략 선택'},
+                    {'uri': 'screening/manual', 'name': '수동 실행'},
+                    {'uri': 'screening/list', 'name': '결과 조회'},
+                    {'uri': 'screening/history', 'name': '실행 이력'},
+                    {'uri': 'screening/statistics', 'name': '통계'},
                 ]
             },
             {
@@ -40,10 +34,11 @@ setting = {
         ]
     },
     'setting_menu': None,
-    'default_route': 'screening'
+    'default_route': 'normal',
 }
 
-# P 인스턴스를 표준 방식으로 생성합니다.
+from plugin import *
+
 P = create_plugin_instance(setting)
 
 try:
