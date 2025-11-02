@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <h3><i class="material-icons">explore</i> 투자 전략 선택</h3>
+            <p class="text-muted">원하는 투자 전략을 선택하여 종목 스크리닝을 실행하세요.</p>
+        </div>
+    </div>
+
+    <!-- 전략 카드 목록 -->
+    <div class="row">
+        {% for strategy in strategies %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card strategy-card h-100 {% if strategy.id == default_strategy %}border-primary{% endif %}">
+                <div class="card-header 
+                    {% if strategy.category == 'quality' %}bg-primary text-white
+                    {% elif strategy.category == 'dividend' %}bg-success text-white
+                    {% elif strategy.category == 'value' %}bg-info text-white
+                    {% else %}bg-secondary text-white{% endif %}">
+                    <h5 class="mb-0">
+                        {{ strategy.name }}
+                        {% if strategy.id == default_strategy %}
+                        <span class="badge badge-light float-right">기본</span>
+                        {% endif %}
+                    </h5>
+                </div>
+                
+                <div class="card-body">
+                    <p class="card-text">{{ strategy.description }}</p>
+                    
+                    <!-- 전략 정보 -->
+                    <div class="strategy-info mb-3">
+                        <div class="row small">
+                            <div class="col-6">
+                                <strong>카테고리:</strong>
+                                <span class="badge badge-secondary">
+                                    {% if strategy.category == 'quality' %}품질
+                                    {% elif strategy.category == 'dividend' %}배당
+                                    {% elif strategy.category == 'value' %}가치
+                                    {% elif strategy.category == 'growth' %}성장
+                                    {% else %}기타{% endif %}
+                                </span>
+                            </div>
+                            <div class="col-6">
+                                <strong>난이도:</strong>
+                                {% if strategy.difficulty == 'easy' %}
+                                <span class="text-success">쉬움</span>
+                                {% elif strategy.difficulty == 'medium' %}
+                                <span class="text-warning">보통</span>
+                                {% else %}
+                                <span class="text-danger">어려움</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row small mt-2">
+                            <div class="col-6">
+                                <strong>조건 수:</strong> {{ strategy.conditions_count }}개
+                            </div>
+                            <div class="col-6">
+                                <strong>실행 시간:</strong> {{ strategy.execution_time }}
+                            </div>
+                        </div>
+                        
+                        <div class="row small mt-2">
+                            <div class="col-12">
+                                <strong>예상 종목:</strong> {{ strategy.expected_stocks }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 조건 요약 -->
+                    <div class="conditions-summary mb-3">
+                        <button class="btn btn-sm btn-outline-secondary btn-block" 
+                                type="button" 
+                                data-toggle="collapse" 
+                                data-target="#conditions-{{ strategy.id }}">
+                            조건 상세 보기 <i class="material-icons" style="font-size:16px;">expand_more</i>
+                        </button>
+                        
+                        <div class="collapse mt-2" id="conditions-{{ strategy.id }}">
+                            <ul class="list-group list-group-flush small">
+                                {% for num, condition in strategy.conditions.items() %}
+                                <li class="list-group-item py-1">
+                                    <strong>{{ num }}.</strong> {{ condition }}
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-footer">
+                    <div class="btn-group btn-block" role="group">
+                        <button class="btn btn-primary" onclick="runStrategy('{{ strategy.id }}')">
+                            <i class="material-icons">play_arrow</i> 실행
+                        </button>
+                        <button class="btn btn-outline-primary" onclick="setDefaultStrategy('{{ strategy.id }}')">
+                            <i class="material-icons">star</i> 기본으로 설정
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- 최근 실행 이력 -->
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <strong>최근 실행 이력</strong>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>실행 시각</th>
+                                <th>전략</th>
+                                <th>통과 종목</th>
+                                <th>실행 시간</th>
+                                <th>상태</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recent_history">
+                            <tr>
+                                <td colspan="5" class="text-center text-muted">로딩 중...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.strategy-card {
+    transition: transform 0.2s;
+}
+
+.strategy-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.strategy-info {
+    background: #f8f9fa;
+    padding: 10px;
+    border-radius: 4px;
+}
+</style>
+
+<script>
+// 전략 실행
+function runStrategy(strategyId) {
+    if (!confirm('선택한 전략으로 스크리닝을 시작하시겠습니까?')) {
+        return;
+    }
+    
+    $.ajax({
+        url: '/7split_checklist_21/api/start',
+        type: 'POST',
+        data: { strategy: strategyId },
+        success: function(response) {
+            if (response.success) {
+                notify('스크리닝이 시작되었습니다.', 'success');
+                // 수동 실행 페이지로 이동
+                setTimeout(function() {
+                    location.href = '/7split_checklist_21/manual';
+                }, 1000);
+            } else {
+                notify('시작 실패: ' + response.message, 'error');
+            }
+        },
+        error: function() {
+            notify('시작 중 오류가 발생했습니다.', 'error');
+        }
+    });
+}
+
+// 기본 전략으로 설정
+function setDefaultStrategy(strategyId) {
+    $.ajax({
+        url: '/7split_checklist_21/api/set_default_strategy',
+        type: 'POST',
+        data: { strategy: strategyId },
+        success: function(response) {
+            if (response.success) {
+                notify('기본 전략이 설정되었습니다.', 'success');
+                location.reload();
+            } else {
+                notify('설정 실패: ' + response.message, 'error');
+            }
+        },
+        error: function() {
+            notify('설정 중 오류가 발생했습니다.', 'error');
+        }
+    });
+}
+
+// 페이지 로드 시 최근 이력 불러오기
+$(document).ready(function() {
+    loadRecentHistory();
+});
+
+function loadRecentHistory() {
+    $.ajax({
+        url: '/7split_checklist_21/api/recent_history',
+        type: 'GET',
+        success: function(response) {
+            if (response.success && response.data.length > 0) {
+                var html = '';
+                response.data.forEach(function(item) {
+                    var statusBadge = item.status === 'completed' 
+                        ? '<span class="badge badge-success">완료</span>'
+                        : '<span class="badge badge-warning">실행중</span>';
+                    
+                    html += '<tr>' +
+                        '<td>' + item.execution_date + '</td>' +
+                        '<td>' + item.strategy_name + '</td>' +
+                        '<td>' + item.passed_stocks + ' / ' + item.total_stocks + '</td>' +
+                        '<td>' + item.execution_time.toFixed(1) + '초</td>' +
+                        '<td>' + statusBadge + '</td>' +
+                        '</tr>';
+                });
+                $('#recent_history').html(html);
+            } else {
+                $('#recent_history').html('<tr><td colspan="5" class="text-center text-muted">실행 이력이 없습니다.</td></tr>');
+            }
+        },
+        error: function() {
+            $('#recent_history').html('<tr><td colspan="5" class="text-center text-danger">이력 로드 실패</td></tr>');
+        }
+    });
+}
+</script>
+
+{% endblock %}
