@@ -3,8 +3,9 @@
 7split_checklist_21 Plugin - Seven Split Mini Strategy
 세븐스플릿 핵심 10개 조건 (빠른 스크리닝)
 """
-from .base_strategy import BaseStrategy
-from ..logic_calculator import Calculator
+from strategies.base_strategy import BaseStrategy
+from logic import Logic
+from logic_calculator import Calculator
 from framework.logger import get_logger
 
 logger = get_logger(__name__)
@@ -43,6 +44,10 @@ class SevenSplitMiniStrategy(BaseStrategy):
     @property
     def execution_time(self):
         return "20-30분"
+
+    @property
+    def required_data(self) -> set:
+        return {'market', 'financial', 'disclosure', 'major_shareholder'}
     
     @property
     def conditions(self):
@@ -71,51 +76,45 @@ class SevenSplitMiniStrategy(BaseStrategy):
         """
         if not self.validate_stock_data(stock_data):
             return False, {}
+
+        # 설정 값 가져오기
+        min_market_cap = int(Logic.get_setting('min_market_cap') or 1000) * 100_000_000
+        max_debt_ratio = int(Logic.get_setting('max_debt_ratio') or 300)
+        min_roe_avg = int(Logic.get_setting('min_roe_avg') or 15)
+        min_pbr = float(Logic.get_setting('min_pbr') or 1.0)
+        min_per = float(Logic.get_setting('min_per') or 10.0)
+        min_div_yield = float(Logic.get_setting('min_div_yield') or 3.0)
+        min_major_shareholder_ratio = int(Logic.get_setting('min_major_shareholder_ratio') or 30)
         
         condition_results = {}
         
         # 1. 상태 제외 (통합)
-        status = stock_data.get('status', '').upper()
-        condition_results[1] = (
-            '관리' not in status and
-            '거래정지' not in status and
-            '환기' not in status and
-            'HALT' not in status and
-            'CAUTION' not in status
-        )
-        
-        if not condition_results[1]:
-            return False, condition_results
-        
+        status_check = self._check_status(stock_data.get('status', ''))
+        condition_results[1] = all(status_check.values())
+
         # 2. 시가총액
         market_cap = stock_data.get('market_cap', 0)
-        condition_results[2] = market_cap >= 100_000_000_000
-        
-        if not condition_results[2]:
-            return False, condition_results
+        condition_results[2] = market_cap >= min_market_cap
         
         # 3. 부채비율
         debt_ratio = stock_data.get('debt_ratio')
-        condition_results[3] = debt_ratio is not None and debt_ratio < 300
-        
-        if not condition_results[3]:
-            return False, condition_results
+        condition_results[3] = debt_ratio is not None and debt_ratio < max_debt_ratio
         
         # 4. ROE
         roe_avg_3y = stock_data.get('roe_avg_3y')
-        condition_results[4] = roe_avg_3y is not None and roe_avg_3y >= 15
+        condition_results[4] = roe_avg_3y is not None and roe_avg_3y >= min_roe_avg
         
         # 5. PER
         per = stock_data.get('per')
-        condition_results[5] = per is not None and per > 0 and per >= 10
+        condition_results[5] = per is not None and per > 0 and per >= min_per
         
         # 6. PBR
         pbr = stock_data.get('pbr')
-        condition_results[6] = pbr is not None and pbr > 0 and pbr >= 1.0
+        condition_results[6] = pbr is not None and pbr > 0 and pbr >= min_pbr
         
         # 7. 배당수익률
         div_yield = stock_data.get('div_yield')
-        condition_results[7] = div_yield is not None and div_yield >= 3.0
+        condition_results[7] = div_yield is not None and div_yield >= min_div_yield
         
         # 8. 3년 연속 흑자
         net_income_3y = stock_data.get('net_income_3y', [])
@@ -129,7 +128,7 @@ class SevenSplitMiniStrategy(BaseStrategy):
         major_shareholder_ratio = stock_data.get('major_shareholder_ratio')
         condition_results[9] = (
             major_shareholder_ratio is not None and 
-            major_shareholder_ratio >= 30
+            major_shareholder_ratio >= min_major_shareholder_ratio
         )
         
         # 10. 유상증자

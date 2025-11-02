@@ -73,8 +73,10 @@ def setting():
     settings = {}
     for key in Logic.db_default.keys():
         settings[key] = Logic.get_setting(key)
+
+    strategies = Logic.get_strategies_metadata()
     
-    return render_template(f'{package_name}_setting.html', settings=settings)
+    return render_template(f'{package_name}_setting.html', settings=settings, strategies=strategies)
 
 
 # 스크리닝 결과 목록
@@ -88,6 +90,7 @@ def list_results():
         # 필터 옵션
         date_filter = request.args.get('date')
         market_filter = request.args.get('market')
+        strategy_filter = request.args.get('strategy')
         passed_only = request.args.get('passed_only', 'true') == 'true'
         
         # 쿼리 빌드
@@ -98,6 +101,9 @@ def list_results():
         
         if market_filter:
             query = query.filter(StockScreeningResult.market == market_filter)
+
+        if strategy_filter:
+            query = query.filter(StockScreeningResult.strategy_name == strategy_filter)
         
         if passed_only:
             query = query.filter(StockScreeningResult.passed == True)
@@ -118,14 +124,19 @@ def list_results():
             .limit(30)\
             .all()
         dates = [d[0] for d in available_dates]
+
+        # 전략 목록 (필터용)
+        available_strategies = Logic.get_strategies_metadata()
         
         return render_template(
             f'{package_name}_list.html',
             results=pagination.items,
             pagination=pagination,
             dates=dates,
+            available_strategies=available_strategies,
             current_date=date_filter,
             current_market=market_filter,
+            current_strategy=strategy_filter,
             passed_only=passed_only
         )
         
@@ -247,9 +258,10 @@ def api_start():
     """스크리닝 수동 시작"""
     try:
         from framework.job import Job
+        strategy_id = request.form.get('strategy')
         
         def screening_job():
-            Logic.start_screening(execution_type='manual')
+            Logic.start_screening(strategy_id=strategy_id, execution_type='manual')
         
         Job.start(f'{package_name}_manual', screening_job)
         
@@ -384,7 +396,84 @@ def api_download_csv():
         )
         
     except Exception as e:
-        logger.error(f"CSV download error: {str(e)}")
+        return jsonify({'success': False, 'message': str(e)})
+
+
+# API: 기본 전략 설정
+@blueprint.route('/api/set_default_strategy', methods=['POST'])
+def api_set_default_strategy():
+    """기본 전략 설정"""
+    try:
+        strategy_id = request.form.get('strategy')
+        if not strategy_id:
+            return jsonify({'success': False, 'message': '전략 ID가 필요합니다.'})
+        
+        Logic.set_setting('default_strategy', strategy_id)
+        return jsonify({'success': True, 'message': '기본 전략이 설정되었습니다.'})
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)})
+
+
+# API: 최근 실행 이력
+@blueprint.route('/api/recent_history')
+def api_recent_history():
+    """최근 실행 이력 5건"""
+    try:
+        histories = db.session.query(ScreeningHistory)\
+            .order_by(ScreeningHistory.execution_date.desc())\
+            .limit(5)\
+            .all()
+        
+        data = []
+        for h in histories:
+            strategy_name = 'N/A'
+            if h.strategy_name:
+                strategy = Logic.get_strategy(h.strategy_name)
+                if strategy:
+                    strategy_name = strategy.strategy_name
+
+            data.append({
+                'execution_date': h.execution_date.strftime('%Y-%m-%d %H:%M:%S'),
+                'strategy_name': strategy_name,
+                'total_stocks': h.total_stocks,
+                'passed_stocks': h.passed_stocks,
+                'execution_time': h.execution_time,
+                'status': h.status
+            })
+        
+        return jsonify({'success': True, 'data': data})
+
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)})
+
+
+@blueprint.route('/api/save_condition_schedules', methods=['POST'])
+def api_save_condition_schedules():
+    """개별 조건 스케줄 저장"""
+    try:
+        schedules = []
+        for key, value in request.form.items():
+            if key.startswith('cron_'):
+                parts = key.split('_')
+                strategy_id = parts[1]
+                condition_number = int(parts[2])
+                cron_expression = value
+                is_enabled = request.form.get(f'enabled_{strategy_id}_{condition_number}') == 'True'
+                schedules.append({
+                    'strategy_id': strategy_id,
+                    'condition_number': condition_number,
+                    'cron_expression': cron_expression,
+                    'is_enabled': is_enabled
+                })
+        
+        if Logic.save_condition_schedules(schedules):
+            return jsonify({'success': True, 'message': '개별 조건 스케줄이 저장되었습니다.'})
+        else:
+            return jsonify({'success': False, 'message': '개별 조건 스케줄 저장에 실패했습니다.'})
+
+    except Exception as e:
+        logger.error(f"Save condition schedules error: {str(e)}")
         return jsonify({'success': False, 'message': str(e)})
 
 

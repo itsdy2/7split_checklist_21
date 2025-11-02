@@ -9,11 +9,10 @@ from datetime import datetime, date
 from framework import db, socketio
 from framework.logger import get_logger
 
-from .model import ModelSetting, StockScreeningResult, ScreeningHistory, FilterDetail
-from .logic_collector import DataCollector
-from .logic_calculator import Calculator
-from .logic_notifier import Notifier
-from .strategies import get_strategy, get_all_strategies, get_strategies_info
+from model import ModelSetting, StockScreeningResult, ScreeningHistory, FilterDetail, ConditionSchedule
+from logic_collector import DataCollector
+from logic_calculator import Calculator
+from logic_notifier import Notifier
 
 logger = get_logger(__name__)
 package_name = '7split_checklist_21'
@@ -30,7 +29,40 @@ class Logic:
         'default_strategy': 'seven_split_21',  # 기본 전략
         'notification_discord': 'True',
         'use_multiprocessing': 'False',
-        'screening_interval_days': '1'
+        'screening_interval_days': '1',
+
+        # seven_split_21 & seven_split_mini
+        'min_market_cap': '1000',
+        'max_debt_ratio': '300',
+        'min_retention_ratio': '100',
+        'min_trading_value': '10',
+        'min_roe_avg': '15',
+        'min_pbr': '1.0',
+        'min_per': '10.0',
+        'min_div_yield': '3.0',
+        'min_pcr': '10.0',
+        'min_psr': '1.0',
+        'min_fscore': '5',
+        'min_major_shareholder_ratio': '30',
+
+        # dividend_strategy
+        'min_market_cap_dividend': '500',
+        'min_div_yield_dividend': '5.0',
+        'min_dividend_payout': '20',
+        'max_dividend_payout': '80',
+        'max_debt_ratio_dividend': '200',
+        'min_trading_value_dividend': '5',
+
+        # value_investing
+        'min_market_cap_value': '300',
+        'max_per_value': '15.0',
+        'min_pbr_value': '0.3',
+        'max_pbr_value': '1.5',
+        'max_debt_ratio_value': '200',
+        'min_current_ratio_value': '150',
+        'min_roe_value': '8',
+        'min_trading_value_value': '3',
+
     }
     
     
@@ -81,12 +113,14 @@ class Logic:
     @staticmethod
     def get_available_strategies():
         """사용 가능한 전략 목록"""
+        from strategies import get_all_strategies
         return get_all_strategies()
     
     
     @staticmethod
     def get_strategies_metadata():
         """전략 메타데이터 목록"""
+        from strategies import get_strategies_info
         return get_strategies_info()
     
     
@@ -103,6 +137,7 @@ class Logic:
             dict: 실행 결과
         """
         start_time = time.time()
+        from strategies import get_strategy
         
         # 기본 전략 설정
         if strategy_id is None:
@@ -115,6 +150,8 @@ class Logic:
             error_msg = f"존재하지 않는 전략: {strategy_id}"
             logger.error(error_msg)
             return {'success': False, 'message': error_msg}
+
+        required_data = strategy.required_data
         
         logger.info(f"Starting screening with strategy: {strategy.strategy_name}")
         
@@ -170,6 +207,14 @@ class Logic:
             filter_stats = {i: {'passed': 0, 'failed': 0} for i in strategy.conditions.keys()}
             
             today = date.today()
+
+            # 이전 필터링 상세 데이터 삭제
+            try:
+                db.session.query(FilterDetail).filter_by(screening_date=today).delete()
+                db.session.commit()
+            except Exception as e:
+                logger.error(f"Failed to delete previous filter details: {str(e)}")
+                db.session.rollback()
             
             for idx, ticker_info in enumerate(all_tickers):
                 try:
@@ -194,10 +239,10 @@ class Logic:
                     market = ticker_info['market']
                     
                     # 데이터 수집
-                    market_data = collector.get_market_data(code)
-                    financial_data = collector.get_financial_data(code)
-                    disclosure_info = collector.get_disclosure_info(code)
-                    major_shareholder = collector.get_major_shareholder(code)
+                    market_data = collector.get_market_data(code, required_data)
+                    financial_data = collector.get_financial_data(code, required_data)
+                    disclosure_info = collector.get_disclosure_info(code, required_data)
+                    major_shareholder = collector.get_major_shareholder(code, required_data)
                     
                     # 계산
                     retention_ratio = calculator.calculate_retention_ratio({
@@ -209,8 +254,7 @@ class Logic:
                     roe_avg_3y = calculator.calculate_roe_average_3y(financial_data.get('roe', []))
                     
                     # F-Score (데이터 충분하면 계산)
-                    fscore = 0
-                    # TODO: F-Score 계산 로직 개선
+                    fscore = calculator.calculate_fscore(financial_data)
                     
                     # PCR, PSR 계산
                     pcr = calculator.calculate_pcr(
@@ -258,6 +302,19 @@ class Logic:
                             filter_stats[condition_num]['passed'] += 1
                         else:
                             filter_stats[condition_num]['failed'] += 1
+
+                    # 필터 상세 정보 저장
+                    for condition_num, passed_status in condition_details.items():
+                        filter_detail = FilterDetail(
+                            screening_date=today,
+                            condition_number=condition_num,
+                            condition_name=strategy.conditions.get(condition_num, 'N/A'),
+                            total_before=idx + 1,
+                            passed=filter_stats[condition_num]['passed'],
+                            failed=filter_stats[condition_num]['failed']
+                        )
+                        db.session.merge(filter_detail)
+
                     
                     # DB 저장
                     result_record = StockScreeningResult()
@@ -268,6 +325,9 @@ class Logic:
                     result_record.strategy_name = strategy_id  # 전략 이름 저장
                     result_record.strategy_version = strategy.version
                     result_record.passed = passed
+                    result_record.is_managed = '관리' in stock_data.get('status', '').upper()
+                    result_record.is_suspended = '거래정지' in stock_data.get('status', '').upper() or 'HALT' in stock_data.get('status', '').upper()
+                    result_record.is_caution = '환기' in stock_data.get('status', '').upper() or 'CAUTION' in stock_data.get('status', '').upper()
                     result_record.market_cap = stock_data['market_cap']
                     result_record.trading_value = stock_data['trading_value']
                     result_record.per = stock_data['per']
@@ -371,24 +431,96 @@ class Logic:
     
     
     @staticmethod
+    def save_condition_schedules(schedules):
+        """개별 조건 스케줄 저장"""
+        try:
+            # 기존 스케줄 모두 삭제
+            db.session.query(ConditionSchedule).delete()
+
+            for schedule_data in schedules:
+                schedule = ConditionSchedule(
+                    strategy_id=schedule_data['strategy_id'],
+                    condition_number=schedule_data['condition_number'],
+                    cron_expression=schedule_data['cron_expression'],
+                    is_enabled=schedule_data['is_enabled']
+                )
+                db.session.add(schedule)
+            
+            db.session.commit()
+            Logic.scheduler_stop()
+            Logic.scheduler_start()
+            return True
+
+        except Exception as e:
+            logger.error(f'Failed to save condition schedules: {e}')
+            db.session.rollback()
+            return False
+
+    @staticmethod
+    def run_single_condition(strategy_id, condition_number):
+        """단일 조건 실행"""
+        try:
+            logger.info(f'Running single condition: {strategy_id} - {condition_number}')
+            
+            strategy = get_strategy(strategy_id)
+            if not strategy:
+                logger.error(f'Strategy not found: {strategy_id}')
+                return
+
+            condition_name = strategy.conditions.get(condition_number, 'N/A')
+            logger.info(f'Condition name: {condition_name}')
+
+            collector = DataCollector(dart_api_key=Logic.get_setting('dart_api_key'))
+            all_tickers = collector.get_all_tickers()
+
+            passed_count = 0
+            failed_count = 0
+
+            for ticker_info in all_tickers:
+                try:
+                    code = ticker_info['code']
+                    stock_data = collector.get_market_data(code, strategy.required_data)
+                    stock_data.update(collector.get_financial_data(code, strategy.required_data))
+                    stock_data.update(collector.get_disclosure_info(code, strategy.required_data))
+                    stock_data['major_shareholder_ratio'] = collector.get_major_shareholder(code, strategy.required_data)
+
+                    # This is not efficient, but it works for now.
+                    # A better approach would be to have a method in each strategy to run a single condition.
+                    _, condition_details = strategy.apply_filters(stock_data)
+                    
+                    if condition_details.get(condition_number, False):
+                        passed_count += 1
+                    else:
+                        failed_count += 1
+
+                except Exception as e:
+                    logger.error(f'Error processing {ticker_info.get("code")}: {e}')
+                    failed_count += 1
+
+            result = {'passed': passed_count, 'failed': failed_count}
+
+            notifier = Notifier(webhook_url=Logic.get_setting('discord_webhook_url'))
+            notifier.send_condition_result_notification(strategy_id, condition_number, result)
+
+        except Exception as e:
+            logger.error(f'Error running single condition: {e}')
+
+    @staticmethod
     def scheduler_start():
         """스케줄러 시작"""
         try:
             from framework.job import Job
             
+            # 전체 스크리닝 스케줄
             if Logic.get_setting('auto_start') == 'True':
                 screening_time = Logic.get_setting('screening_time')
                 hour, minute = map(int, screening_time.split(':'))
-                
                 default_strategy = Logic.get_setting('default_strategy')
                 
                 Job.scheduler.add_job(
                     id=f'{package_name}_auto',
                     func=Logic.start_screening,
-                    kwargs={
-                        'strategy_id': default_strategy,
-                        'execution_type': 'auto'
-                    },
+                    kwargs={'strategy_id': default_strategy, 'execution_type': 'auto'},
                     trigger='cron',
                     hour=hour,
                     minute=minute,
@@ -396,7 +528,20 @@ class Logic:
                     replace_existing=True
                 )
                 logger.info(f"Scheduler started: {screening_time} with strategy {default_strategy}")
-                
+
+            # 개별 조건 스케줄
+            schedules = db.session.query(ConditionSchedule).filter_by(is_enabled=True).all()
+            for schedule in schedules:
+                job_id = f'{package_name}_condition_{schedule.strategy_id}_{schedule.condition_number}'
+                Job.scheduler.add_job(
+                    id=job_id,
+                    func=Logic.run_single_condition,
+                    kwargs={'strategy_id': schedule.strategy_id, 'condition_number': schedule.condition_number},
+                    trigger='cron',
+                    **cron_to_dict(schedule.cron_expression)
+                )
+                logger.info(f'Scheduled condition {job_id} with cron: {schedule.cron_expression}')
+
         except Exception as e:
             logger.error(f"Scheduler start error: {str(e)}")
     
@@ -407,6 +552,26 @@ class Logic:
         try:
             from framework.job import Job
             Job.scheduler.remove_job(f'{package_name}_auto')
+            schedules = db.session.query(ConditionSchedule).all()
+            for schedule in schedules:
+                job_id = f'{package_name}_condition_{schedule.strategy_id}_{schedule.condition_number}'
+                try:
+                    Job.scheduler.remove_job(job_id)
+                except Exception as e:
+                    logger.debug(f'Failed to remove job {job_id}: {e}')
             logger.info("Scheduler stopped")
         except Exception as e:
             logger.debug(f"Scheduler stop error: {str(e)}")
+
+def cron_to_dict(cron_expression):
+    """Cron 표현식을 APScheduler trigger 인자로 변환"""
+    parts = cron_expression.split()
+    if len(parts) != 5:
+        raise ValueError("Invalid cron expression")
+    return {
+        'minute': parts[0],
+        'hour': parts[1],
+        'day': parts[2],
+        'month': parts[3],
+        'day_of_week': parts[4],
+    }

@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">스크리닝 통계</h3>
+                </div>
+                <div class="card-body">
+                    {% if error %}
+                        <div class="alert alert-danger">{{ error }}</div>
+                    {% else %}
+                        <h4>일자별 통과 종목 수 (최근 30일)</h4>
+                        <canvas id="dailyStatsChart"></canvas>
+                        <hr>
+                        <h4>시장별 통과 종목 수</h4>
+                        <canvas id="marketStatsChart"></canvas>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Daily Stats Chart
+        var dailyCtx = document.getElementById('dailyStatsChart').getContext('2d');
+        var dailyStatsChart = new Chart(dailyCtx, {
+            type: 'bar',
+            data: {
+                labels: [{% for stat in daily_stats %}'{{ stat.screening_date }}',{% endfor %}],
+                datasets: [{
+                    label: '통과 종목 수',
+                    data: [{% for stat in daily_stats %}{{ stat.passed or 0 }},{% endfor %}],
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // Market Stats Chart
+        var marketCtx = document.getElementById('marketStatsChart').getContext('2d');
+        var marketStatsChart = new Chart(marketCtx, {
+            type: 'pie',
+            data: {
+                labels: [{% for stat in market_stats %}'{{ stat.market }}',{% endfor %}],
+                datasets: [{
+                    label: '통과 종목 수',
+                    data: [{% for stat in market_stats %}{{ stat.passed or 0 }},{% endfor %}],
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.2)',
+                        'rgba(54, 162, 235, 0.2)',
+                        'rgba(255, 206, 86, 0.2)'
+                    ],
+                    borderColor: [
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 206, 86, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -61,7 +61,7 @@ class StockScreeningResult(db.Model):
     debt_ratio = db.Column(db.Float)  # 부채비율
     retention_ratio = db.Column(db.Float)  # 유보율
     roe_avg_3y = db.Column(db.Float)  # ROE 3년 평균
-    net_income_3y = db.Column(db.String(50))  # 3년 순이익 (JSON 문자열)
+    net_income_3y = db.Column(db.Text)  # 3년 순이익 (JSON 문자열)
     
     # 품질 지표
     fscore = db.Column(db.Integer)  # 피오트로스키 F-Score
@@ -144,3 +144,19 @@ class FilterDetail(db.Model):
     
     def __repr__(self):
         return f'<Filter {self.condition_name} passed={self.passed}/{self.total_before}>'
+
+
+# 개별 조건 스케줄
+class ConditionSchedule(db.Model):
+    __tablename__ = '7split_condition_schedule'
+    __table_args__ = {'mysql_collate': 'utf8_general_ci'}
+    __bind_key__ = '7split_checklist_21'
+
+    id = db.Column(db.Integer, primary_key=True)
+    strategy_id = db.Column(db.String(50), nullable=False)
+    condition_number = db.Column(db.Integer, nullable=False)
+    cron_expression = db.Column(db.String(100), nullable=False)
+    is_enabled = db.Column(db.Boolean, default=False)
+
+    def __repr__(self):
+        return f'<ConditionSchedule {self.strategy_id} - {self.condition_number}>'

@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">도움말</h3>
+                </div>
+                <div class="card-body">
+                    <h4>플러그인 소개</h4>
+                    <p>세븐스플릿 스크리닝 플러그인은 세븐스플릿의 21가지 체크리스트를 기반으로 KOSPI/KOSDAQ 종목을 자동 스크리닝하는 도구입니다.</p>
+                    
+                    <h4>주요 기능</h4>
+                    <ul>
+                        <li>다양한 투자 전략 제공 (세븐스플릿 21, 미니, 배당주, 가치주)</li>
+                        <li>자동 스크리닝 스케줄링</li>
+                        <li>스크리닝 결과 조회 및 상세 분석</li>
+                        <li>Discord 알림</li>
+                    </ul>
+
+                    <h4>사용 방법</h4>
+                    <ol>
+                        <li><b>설정:</b> DART API 키를 입력하고, 필요시 Discord Webhook URL을 설정합니다.</li>
+                        <li><b>전략 선택:</b> 원하는 투자 전략을 선택하고 기본 전략으로 설정할 수 있습니다.</li>
+                        <li><b>스크리닝 실행:</b> 수동으로 스크리닝을 시작하거나, 설정된 시간에 자동으로 실행되도록 할 수 있습니다.</li>
+                        <li><b>결과 조회:</b> 스크리닝 결과를 목록에서 확인하고, 종목을 클릭하여 상세 정보를 볼 수 있습니다.</li>
+                    </ol>
+
+                    <h4>문제 해결</h4>
+                    <p>스크리닝이 실패하거나 오류가 발생하는 경우, 로그 메뉴에서 오류 메시지를 확인하거나 플러그인 개발자에게 문의하세요.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

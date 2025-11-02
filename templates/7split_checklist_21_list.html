@@ -24,9 +24,9 @@
                     <label for="strategy_filter" class="mr-2">전략:</label>
                     <select class="form-control" id="strategy_filter" name="strategy">
                         <option value="">전체</option>
-                        {% for strategy_id, strategy_name in available_strategies.items() %}
-                        <option value="{{ strategy_id }}" {% if current_strategy == strategy_id %}selected{% endif %}>
-                            {{ strategy_name }}
+                        {% for strategy in available_strategies %}
+                        <option value="{{ strategy.id }}" {% if current_strategy == strategy.id %}selected{% endif %}>
+                            {{ strategy.name }}
                         </option>
                         {% endfor %}
                     </select>
@@ -182,6 +182,7 @@ $('#filter_form').on('submit', function(e) {
     e.preventDefault();
     
     var params = [];
+    if ($('#strategy_filter').val()) params.push('strategy=' + $('#strategy_filter').val());
     if ($('#date_filter').val()) params.push('date=' + $('#date_filter').val());
     if ($('#market_filter').val()) params.push('market=' + $('#market_filter').val());
     if ($('#passed_only').is(':checked')) params.push('passed_only=true');

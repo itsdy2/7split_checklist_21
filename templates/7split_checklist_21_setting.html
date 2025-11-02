@@ -118,49 +118,99 @@
                 <strong>필터링 조건</strong>
             </div>
             <div class="card-body">
-                <div class="row">
-                    <div class="col-md-4">
-                        <div class="form-group">
-                            <label for="filter_market_cap_min">최소 시가총액 (원)</label>
-                            <input 
-                                type="number" 
-                                class="form-control" 
-                                id="filter_market_cap_min" 
-                                name="filter_market_cap_min" 
-                                value="{{ settings.filter_market_cap_min }}"
-                            >
-                            <small class="form-text text-muted">기본: 1000억 (100000000000)</small>
+                <ul class="nav nav-tabs" id="strategyTabs" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active" id="seven-split-tab" data-toggle="tab" href="#seven-split" role="tab">세븐스플릿</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="dividend-tab" data-toggle="tab" href="#dividend" role="tab">배당주</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="value-tab" data-toggle="tab" href="#value" role="tab">가치주</a>
+                    </li>
+                </ul>
+                <div class="tab-content" id="strategyTabsContent">
+                    <!-- 세븐스플릿 설정 -->
+                    <div class="tab-pane fade show active" id="seven-split" role="tabpanel">
+                        <div class="row mt-3">
+                            <div class="col-md-4"><div class="form-group"><label>최소 시가총액 (억)</label><input type="number" class="form-control" name="min_market_cap" value="{{ settings.min_market_cap }}"></div></div>
+                            <div class="col-md-4"><div class="form-group"><label>최대 부채비율 (%)</label><input type="number" class="form-control" name="max_debt_ratio" value="{{ settings.max_debt_ratio }}"></div></div>
+                            <div class="col-md-4"><div class="form-group"><label>최소 유보율 (%)</label><input type="number" class="form-control" name="min_retention_ratio" value="{{ settings.min_retention_ratio }}"></div></div>
+                            <div class="col-md-4"><div class="form-group"><label>최소 거래대금 (억)</label><input type="number" class="form-control" name="min_trading_value" value="{{ settings.min_trading_value }}"></div></div>
+                            <div class="col-md-4"><div class="form-group"><label>최소 ROE 평균 (%)</label><input type="number" class="form-control" name="min_roe_avg" value="{{ settings.min_roe_avg }}"></div></div>
+                            <div class="col-md-4"><div class="form-group"><label>최소 PBR</label><input type="number" step="0.1" class="form-control" name="min_pbr" value="{{ settings.min_pbr }}"></div></div>
+                            <div class="col-md-4"><div class="form-group"><label>최소 PER</label><input type="number" step="0.1" class="form-control" name="min_per" value="{{ settings.min_per }}"></div></div>
+                            <div class="col-md-4"><div class="form-group"><label>최소 배당수익률 (%)</label><input type="number" step="0.1" class="form-control" name="min_div_yield" value="{{ settings.min_div_yield }}"></div></div>
+                            <div class="col-md-4"><div class="form-group"><label>최소 PCR</label><input type="number" step="0.1" class="form-control" name="min_pcr" value="{{ settings.min_pcr }}"></div></div>
+                            <div class="col-md-4"><div class="form-group"><label>최소 PSR</label><input type="number" step="0.1" class="form-control" name="min_psr" value="{{ settings.min_psr }}"></div></div>
+                            <div class="col-md-4"><div class="form-group"><label>최소 F-Score</label><input type="number" class="form-control" name="min_fscore" value="{{ settings.min_fscore }}"></div></div>
+                            <div class="col-md-4"><div class="form-group"><label>최소 최대주주 지분율 (%)</label><input type="number" class="form-control" name="min_major_shareholder_ratio" value="{{ settings.min_major_shareholder_ratio }}"></div></div>
                         </div>
                     </div>
-
-                    <div class="col-md-4">
-                        <div class="form-group">
-                            <label for="filter_debt_ratio_max">최대 부채비율 (%)</label>
-                            <input 
-                                type="number" 
-                                class="form-control" 
-                                id="filter_debt_ratio_max" 
-                                name="filter_debt_ratio_max" 
-                                value="{{ settings.filter_debt_ratio_max }}"
-                            >
-                            <small class="form-text text-muted">기본: 300%</small>
+                    <!-- 배당주 설정 -->
+                    <div class="tab-pane fade" id="dividend" role="tabpanel">
+                        <div class="row mt-3">
+                            <div class="col-md-4"><div class="form-group"><label>최소 시가총액 (억)</label><input type="number" class="form-control" name="min_market_cap_dividend" value="{{ settings.min_market_cap_dividend }}"></div></div>
+                            <div class="col-md-4"><div class="form-group"><label>최소 배당수익률 (%)</label><input type="number" step="0.1" class="form-control" name="min_div_yield_dividend" value="{{ settings.min_div_yield_dividend }}"></div></div>
+                            <div class="col-md-4"><div class="form-group"><label>최소 배당성향 (%)</label><input type="number" class="form-control" name="min_dividend_payout" value="{{ settings.min_dividend_payout }}"></div></div>
+                            <div class="col-md-4"><div class="form-group"><label>최대 배당성향 (%)</label><input type="number" class="form-control" name="max_dividend_payout" value="{{ settings.max_dividend_payout }}"></div></div>
+                            <div class="col-md-4"><div class="form-group"><label>최대 부채비율 (%)</label><input type="number" class="form-control" name="max_debt_ratio_dividend" value="{{ settings.max_debt_ratio_dividend }}"></div></div>
+                            <div class="col-md-4"><div class="form-group"><label>최소 거래대금 (억)</label><input type="number" class="form-control" name="min_trading_value_dividend" value="{{ settings.min_trading_value_dividend }}"></div></div>
                         </div>
                     </div>
-
-                    <div class="col-md-4">
-                        <div class="form-group">
-                            <label for="filter_roe_min">최소 ROE (%)</label>
-                            <input 
-                                type="number" 
-                                class="form-control" 
-                                id="filter_roe_min" 
-                                name="filter_roe_min" 
-                                value="{{ settings.filter_roe_min }}"
-                            >
-                            <small class="form-text text-muted">기본: 15%</small>
+                    <!-- 가치주 설정 -->
+                    <div class="tab-pane fade" id="value" role="tabpanel">
+                        <div class="row mt-3">
+                            <div class="col-md-4"><div class="form-group"><label>최소 시가총액 (억)</label><input type="number" class="form-control" name="min_market_cap_value" value="{{ settings.min_market_cap_value }}"></div></div>
+                            <div class="col-md-4"><div class="form-group"><label>최대 PER</label><input type="number" step="0.1" class="form-control" name="max_per_value" value="{{ settings.max_per_value }}"></div></div>
+                            <div class="col-md-4"><div class="form-group"><label>최소 PBR</label><input type="number" step="0.1" class="form-control" name="min_pbr_value" value="{{ settings.min_pbr_value }}"></div></div>
+                            <div class="col-md-4"><div class="form-group"><label>최대 PBR</label><input type="number" step="0.1" class="form-control" name="max_pbr_value" value="{{ settings.max_pbr_value }}"></div></div>
+                            <div class="col-md-4"><div class="form-group"><label>최대 부채비율 (%)</label><input type="number" class="form-control" name="max_debt_ratio_value" value="{{ settings.max_debt_ratio_value }}"></div></div>
+                            <div class="col-md-4"><div class="form-group"><label>최소 유동비율 (%)</label><input type="number" class="form-control" name="min_current_ratio_value" value="{{ settings.min_current_ratio_value }}"></div></div>
+                            <div class="col-md-4"><div class="form-group"><label>최소 ROE (%)</label><input type="number" class="form-control" name="min_roe_value" value="{{ settings.min_roe_value }}"></div></div>
+                            <div class="col-md-4"><div class="form-group"><label>최소 거래대금 (억)</label><input type="number" class="form-control" name="min_trading_value_value" value="{{ settings.min_trading_value_value }}"></div></div>
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- 개별 조건 스케줄링 -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <strong>개별 조건 스케줄링</strong>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>전략</th>
+                            <th>조건</th>
+                            <th>실행 주기 (Cron)</th>
+                            <th>활성화</th>
+                            <th>액션</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for strategy in strategies %}
+                            {% for condition_num, condition_name in strategy.conditions.items() %}
+                            <tr>
+                                <td>{{ strategy.name }}</td>
+                                <td>{{ condition_name }}</td>
+                                <td><input type="text" class="form-control form-control-sm" name="cron_{{ strategy.id }}_{{ condition_num }}" placeholder="* * * * *"></td>
+                                <td>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" name="enabled_{{ strategy.id }}_{{ condition_num }}" value="True">
+                                    </div>
+                                </td>
+                                <td>
+                                    <button type="button" class="btn btn-sm btn-primary" onclick="saveConditionSchedule(this)">저장</button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
 
@@ -208,6 +258,39 @@ $(document).ready(function() {
         });
     });
 });
+    <script>
+function saveConditionSchedule(button) {
+    var row = $(button).closest('tr');
+    var strategy_id = row.find('input[name^="cron_"]').attr('name').split('_')[1];
+    var condition_number = row.find('input[name^="cron_"]').attr('name').split('_')[2];
+    var cron_expression = row.find('input[name^="cron_"]').val();
+    var is_enabled = row.find('input[name^="enabled_"]').is(':checked');
+
+    var data = {
+        schedules: [{
+            strategy_id: strategy_id,
+            condition_number: condition_number,
+            cron_expression: cron_expression,
+            is_enabled: is_enabled
+        }]
+    };
+
+    $.ajax({
+        url: '/7split_checklist_21/api/save_condition_schedules',
+        type: 'POST',
+        data: data,
+        success: function(response) {
+            if (response.success) {
+                notify('개별 조건 스케줄이 저장되었습니다.', 'success');
+            } else {
+                notify('저장 실패: ' + response.message, 'error');
+            }
+        },
+        error: function() {
+            notify('저장 중 오류가 발생했습니다.', 'error');
+        }
+    });
+}
 </script>
 
 {% endblock %}

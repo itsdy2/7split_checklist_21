@@ -3,21 +3,29 @@
 7split_checklist_21 Plugin - Strategies Module
 투자 전략 모듈
 """
-from .base_strategy import BaseStrategy
-from .seven_split_21 import SevenSplit21Strategy
-from .seven_split_mini import SevenSplitMiniStrategy
-from .dividend_strategy import DividendStrategy
-from .value_investing import ValueInvestingStrategy
+import os
+import importlib
+from strategies.base_strategy import BaseStrategy
 
-# 사용 가능한 전략 목록
-AVAILABLE_STRATEGIES = {
-    'seven_split_21': SevenSplit21Strategy,
-    'seven_split_mini': SevenSplitMiniStrategy,
-    'dividend_strategy': DividendStrategy,
-    'value_investing': ValueInvestingStrategy
-}
+AVAILABLE_STRATEGIES = {}
 
+def _discover_strategies():
+    """Dynamically discover and import strategies."""
+    global AVAILABLE_STRATEGIES
+    if AVAILABLE_STRATEGIES:
+        return
 
+    strategies_dir = os.path.dirname(__file__)
+    for filename in os.listdir(strategies_dir):
+        if filename.endswith('.py') and not filename.startswith('__'):
+            module_name = f'strategies.{filename[:-3]}'
+            module = importlib.import_module(module_name)
+            for item_name in dir(module):
+                item = getattr(module, item_name)
+                if isinstance(item, type) and issubclass(item, BaseStrategy) and item is not BaseStrategy:
+                    AVAILABLE_STRATEGIES[item().strategy_id] = item
+
+_discover_strategies()
 def get_strategy(strategy_id):
     """
     전략 ID로 전략 인스턴스 가져오기

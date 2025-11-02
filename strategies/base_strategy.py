@@ -65,6 +65,16 @@ class BaseStrategy(ABC):
             {조건번호: 조건명} 딕셔너리
         """
         pass
+
+    @property
+    @abstractmethod
+    def required_data(self) -> set:
+        """
+        필요한 데이터 목록
+        Returns:
+            {'market', 'financial', 'disclosure', 'major_shareholder'} 와 같은 set
+        """
+        pass
     
     @property
     def version(self) -> str:
@@ -181,6 +191,24 @@ class BaseStrategy(ABC):
                 f"[{self.strategy_id}] ❌ {name}({code}) - "
                 f"미통과 조건: {', '.join(failed_conditions)}"
             )
+
+    def _check_status(self, status: str) -> dict:
+        """
+        공통 상태 필터 (관리종목, 거래정지 등)
+        
+        Args:
+            status (str): 종목 상태 문자열
+        
+        Returns:
+            dict: 각 상태 필터 결과
+        """
+        status = status.upper()
+        return {
+            'is_managed': '관리' not in status,
+            'is_suspended': '거래정지' not in status and 'HALT' not in status,
+            'is_caution': '환기' not in status and 'CAUTION' not in status,
+            'is_delisting': '정리매매' not in status or '폐지' not in status,
+        }
     
     def __repr__(self):
         return f"<{self.__class__.__name__} id={self.strategy_id} name={self.strategy_name}>"

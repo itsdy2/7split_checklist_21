@@ -213,6 +213,59 @@ class Notifier:
             return False
     
     
+    def send_condition_result_notification(self, strategy_id, condition_number, result):
+        """
+        단일 조건 실행 결과를 Discord로 전송
+        
+        Args:
+            strategy_id (str): 전략 ID
+            condition_number (int): 조건 번호
+            result (dict): 실행 결과 {passed: int, failed: int}
+        """
+        if not self.webhook_url:
+            return False
+
+        try:
+            from .logic import Logic
+            strategy = Logic.get_strategy(strategy_id)
+            if not strategy:
+                return False
+
+            condition_name = strategy.conditions.get(condition_number, 'N/A')
+
+            embed = {
+                "title": f"📊 개별 조건 실행 결과: {strategy.strategy_name}",
+                "description": f"**{condition_name}** 조건의 스크리닝 결과입니다.",
+                "color": 4886754, # 보라색
+                "fields": [
+                    {
+                        "name": "✅ 통과",
+                        "value": f"{result['passed']:,}개",
+                        "inline": True
+                    },
+                    {
+                        "name": "❌ 실패",
+                        "value": f"{result['failed']:,}개",
+                        "inline": True
+                    }
+                ],
+                "footer": {
+                    "text": f"실행 시각: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+                }
+            }
+
+            payload = {
+                "username": "세븐스플릿 Bot",
+                "embeds": [embed]
+            }
+
+            requests.post(self.webhook_url, json=payload, timeout=10)
+            return True
+
+        except Exception as e:
+            logger.error(f"Failed to send condition result notification: {e}")
+            return False
+
     @staticmethod
     def format_number(num):
         """

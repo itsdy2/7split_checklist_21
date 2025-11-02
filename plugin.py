@@ -19,10 +19,10 @@ plugin_info = {
     'developer': 'FlaskFarm Community',
     'description': '세븐스플릿의 21가지 체크리스트를 기반으로 KOSPI/KOSDAQ 종목을 자동 스크리닝하는 플러그인입니다.',
     'home': f'/{package_name}',
-    'more': 'https://github.com/yourusername/7split_checklist_21',
+    'more': 'https://github.com/itsdy2/7split_checklist_21',
     
     # GitHub 설치 정보
-    'zip': 'https://github.com/yourusername/7split_checklist_21/archive/refs/heads/main.zip',
+    'zip': 'https://github.com/itsdy2/7split_checklist_21/archive/refs/heads/main.zip',
     'path': '7split_checklist_21-main'
 }
 

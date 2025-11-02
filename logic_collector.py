@@ -101,17 +101,18 @@ class DataCollector:
             
             return tickers
             
-        except Exception as e:
+        except (requests.exceptions.RequestException, ValueError) as e:
             logger.error(f"Failed to get tickers: {str(e)}")
             return []
     
     
-    def get_market_data(self, code):
+    def get_market_data(self, code, required_data):
         """
         시장 데이터 수집
         
         Args:
             code (str): 종목코드
+            required_data (set): 필요한 데이터 종류
         
         Returns:
             dict: 시장 데이터
@@ -123,6 +124,9 @@ class DataCollector:
             'pbr': None,
             'div_yield': None
         }
+
+        if 'market' not in required_data:
+            return data
         
         try:
             if pykrx_stock:
@@ -176,17 +180,18 @@ class DataCollector:
             
             return data
             
-        except Exception as e:
+        except (KeyError, AttributeError, requests.exceptions.RequestException, ValueError) as e:
             logger.error(f"Market data collection error for {code}: {str(e)}")
             return data
     
     
-    def get_financial_data(self, code):
+    def get_financial_data(self, code, required_data):
         """
         재무제표 데이터 수집 (OpenDartReader 개선)
         
         Args:
             code (str): 종목코드
+            required_data (set): 필요한 데이터 종류
         
         Returns:
             dict: 재무 데이터
@@ -204,6 +209,9 @@ class DataCollector:
             'dividend_history': [],
             'dividend_payout': None
         }
+
+        if 'financial' not in required_data:
+            return data
         
         if not self.dart:
             return data
@@ -289,17 +297,18 @@ class DataCollector:
             
             return data
             
-        except Exception as e:
+        except (KeyError, AttributeError, requests.exceptions.RequestException, ValueError) as e:
             logger.error(f"Financial data collection error for {code}: {str(e)}")
             return data
     
     
-    def get_disclosure_info(self, code):
+    def get_disclosure_info(self, code, required_data):
         """
         공시 정보 수집 (CB/BW, 유상증자)
         
         Args:
             code (str): 종목코드
+            required_data (set): 필요한 데이터 종류
         
         Returns:
             dict: {'has_cb_bw': bool, 'has_paid_increase': bool}
@@ -308,6 +317,9 @@ class DataCollector:
             'has_cb_bw': False,
             'has_paid_increase': False
         }
+
+        if 'disclosure' not in required_data:
+            return info
         
         if not self.dart:
             return info
@@ -351,21 +363,24 @@ class DataCollector:
             
             return info
             
-        except Exception as e:
+        except (KeyError, AttributeError, requests.exceptions.RequestException, ValueError) as e:
             logger.error(f"Disclosure info error for {code}: {str(e)}")
             return info
     
     
-    def get_major_shareholder(self, code):
+    def get_major_shareholder(self, code, required_data):
         """
         최대주주 지분율 조회
         
         Args:
             code (str): 종목코드
+            required_data (set): 필요한 데이터 종류
         
         Returns:
             float: 최대주주 지분율 (%)
         """
+        if 'major_shareholder' not in required_data:
+            return 0.0
         if not self.dart:
             return 0.0
         
@@ -384,7 +399,7 @@ class DataCollector:
             
             return float(ratio)
             
-        except Exception as e:
+        except (KeyError, AttributeError, requests.exceptions.RequestException, ValueError) as e:
             logger.debug(f"Major shareholder error for {code}: {str(e)}")
             return 0.0
     

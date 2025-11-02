@@ -3,7 +3,8 @@
 7split_checklist_21 Plugin - Dividend Strategy
 안정적인 배당주 투자 전략
 """
-from .base_strategy import BaseStrategy
+from strategies.base_strategy import BaseStrategy
+from logic import Logic
 from framework.logger import get_logger
 
 logger = get_logger(__name__)
@@ -39,6 +40,10 @@ class DividendStrategy(BaseStrategy):
     @property
     def execution_time(self):
         return "15-25분"
+
+    @property
+    def required_data(self) -> set:
+        return {'market', 'financial'}
     
     @property
     def conditions(self):
@@ -65,35 +70,33 @@ class DividendStrategy(BaseStrategy):
         """
         if not self.validate_stock_data(stock_data):
             return False, {}
+
+        # 설정 값 가져오기
+        min_market_cap_dividend = int(Logic.get_setting('min_market_cap_dividend') or 500) * 100_000_000
+        min_div_yield_dividend = float(Logic.get_setting('min_div_yield_dividend') or 5.0)
+        min_dividend_payout = int(Logic.get_setting('min_dividend_payout') or 20)
+        max_dividend_payout = int(Logic.get_setting('max_dividend_payout') or 80)
+        max_debt_ratio_dividend = int(Logic.get_setting('max_debt_ratio_dividend') or 200)
+        min_trading_value_dividend = int(Logic.get_setting('min_trading_value_dividend') or 5) * 100_000_000
         
         condition_results = {}
         
         # 1. 관리종목 제외
-        status = stock_data.get('status', '').upper()
-        condition_results[1] = (
-            '관리' not in status and
-            '거래정지' not in status and
-            '폐지' not in status
-        )
-        
-        if not condition_results[1]:
-            return False, condition_results
-        
+        status_check = self._check_status(stock_data.get('status', ''))
+        condition_results[1] = status_check['is_managed'] and status_check['is_suspended'] and status_check['is_delisting']
+
         # 2. 시가총액 (배당주는 중소형주도 포함)
         market_cap = stock_data.get('market_cap', 0)
-        condition_results[2] = market_cap >= 50_000_000_000  # 500억
+        condition_results[2] = market_cap >= min_market_cap_dividend
         
-        if not condition_results[2]:
-            return False, condition_results
-        
-        # 3. 배당수익률 5% 이상
+        # 3. 배당수익률
         div_yield = stock_data.get('div_yield')
-        condition_results[3] = div_yield is not None and div_yield >= 5.0
+        condition_results[3] = div_yield is not None and div_yield >= min_div_yield_dividend
         
-        # 4. 배당성향 20-80% (너무 낮거나 높으면 제외)
+        # 4. 배당성향
         dividend_payout = stock_data.get('dividend_payout')
         if dividend_payout is not None:
-            condition_results[4] = 20 <= dividend_payout <= 80
+            condition_results[4] = min_dividend_payout <= dividend_payout <= max_dividend_payout
         else:
             # 배당성향 데이터 없으면 일단 통과 (나중에 개선)
             condition_results[4] = True
@@ -107,9 +110,9 @@ class DividendStrategy(BaseStrategy):
             # 히스토리 없으면 현재 배당수익률로 판단
             condition_results[5] = div_yield is not None and div_yield > 0
         
-        # 6. 부채비율 200% 미만 (배당주는 더 보수적)
+        # 6. 부채비율
         debt_ratio = stock_data.get('debt_ratio')
-        condition_results[6] = debt_ratio is not None and debt_ratio < 200
+        condition_results[6] = debt_ratio is not None and debt_ratio < max_debt_ratio_dividend
         
         # 7. 3년 연속 흑자
         net_income_3y = stock_data.get('net_income_3y', [])
@@ -118,9 +121,9 @@ class DividendStrategy(BaseStrategy):
         else:
             condition_results[7] = False
         
-        # 8. 거래대금 5억 이상 (유동성)
+        # 8. 거래대금
         trading_value = stock_data.get('trading_value', 0)
-        condition_results[8] = trading_value >= 500_000_000
+        condition_results[8] = trading_value >= min_trading_value_dividend
         
         # 전체 통과 여부
         passed = all(condition_results.values())
