@@ -172,12 +172,13 @@ class Notifier:
             return False
     
     
-    def send_start_notification(self, total_stocks):
+    def send_start_notification(self, total_stocks, strategy_name=""): # strategy_name 인자 추가
         """
         스크리닝 시작 알림
         
         Args:
             total_stocks (int): 전체 종목 수
+            strategy_name (str): 실행할 전략 이름
         
         Returns:
             bool: 전송 성공 여부
@@ -188,7 +189,8 @@ class Notifier:
         try:
             embed = {
                 "title": "🚀 스크리닝 시작",
-                "description": f"{total_stocks:,}개 종목 분석을 시작합니다.",
+                # 전략 이름이 있으면 설명에 추가
+                "description": f"**{strategy_name}** 전략으로 {total_stocks:,}개 종목 분석을 시작합니다.",
                 "color": 3447003,  # 파란색
                 "footer": {
                     "text": f"시작 시각: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"

@@ -162,7 +162,7 @@ function runStrategy(strategyId) {
     }
     
     $.ajax({
-        url: '/7split_checklist_21/api/start',
+        url: '/7split_checklist_21/api/screening/start',
         type: 'POST',
         data: { strategy: strategyId },
         success: function(response) {
@@ -170,7 +170,7 @@ function runStrategy(strategyId) {
                 notify('스크리닝이 시작되었습니다.', 'success');
                 // 수동 실행 페이지로 이동
                 setTimeout(function() {
-                    location.href = '/7split_checklist_21/manual';
+                    location.href = '/7split_checklist_21/screening/manual';
                 }, 1000);
             } else {
                 notify('시작 실패: ' + response.message, 'error');
@@ -185,7 +185,7 @@ function runStrategy(strategyId) {
 // 기본 전략으로 설정
 function setDefaultStrategy(strategyId) {
     $.ajax({
-        url: '/7split_checklist_21/api/set_default_strategy',
+        url: '/7split_checklist_21/api/screening/set_default_strategy',
         type: 'POST',
         data: { strategy: strategyId },
         success: function(response) {
@@ -209,7 +209,7 @@ $(document).ready(function() {
 
 function loadRecentHistory() {
     $.ajax({
-        url: '/7split_checklist_21/api/recent_history',
+        url: '/7split_checklist_21/api/screening/recent_history',
         type: 'GET',
         success: function(response) {
             if (response.success && response.data.length > 0) {

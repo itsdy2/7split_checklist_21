@@ -121,7 +121,7 @@
                 {% endif %}
 
                 {% for stock in results %}
-                <tr onclick="location.href='/7split_checklist_21/detail/{{ stock.code }}'" style="cursor:pointer;">
+                <tr onclick="location.href='/7split_checklist_21/screening/detail/{{ stock.code }}'" style="cursor:pointer;">
                     <td><strong>{{ stock.code }}</strong></td>
                     <td>{{ stock.name }}</td>
                     <td>
@@ -187,13 +187,13 @@ $('#filter_form').on('submit', function(e) {
     if ($('#market_filter').val()) params.push('market=' + $('#market_filter').val());
     if ($('#passed_only').is(':checked')) params.push('passed_only=true');
     
-    location.href = '/7split_checklist_21/list?' + params.join('&');
+    location.href = '/7split_checklist_21/screening/list?' + params.join('&');
 });
 
 // CSV 다운로드
 function downloadCSV() {
     var date = $('#date_filter').val();
-    var url = '/7split_checklist_21/api/download_csv';
+    var url = '/7split_checklist_21/api/screening/download_csv';
     if (date) url += '?date=' + date;
     
     window.location.href = url;

@@ -15,8 +15,8 @@ setting = {
         'name': '세븐스플릿 스크리닝',
         'list': [
             {
-                'uri': 'base',
-                'name': '설정',
+                'uri': 'basic',
+                'name': '기본',
                 'list': [
                     {'uri': 'setting', 'name': '설정'},
                 ]
@@ -39,16 +39,16 @@ setting = {
         ]
     },
     'setting_menu': None,
-    'default_route': 'screening'
+    'default_route': 'basic'
 }
 
 P = create_plugin_instance(setting)
 
 try:
-    from .mod_base import ModuleBase
+    from .mod_basic import ModuleBasic
     from .mod_screening import ModuleScreening
     
-    P.set_module_list([ModuleBase, ModuleScreening])
+    P.set_module_list([ModuleBasic, ModuleScreening])
     
 except Exception as e:
     P.logger.error(f'Exception:{str(e)}')

@@ -1,0 +1,7 @@
+title: "세븐스플릿 스크리닝"
+version: "1.0.0"
+package_name: "7split_checklist_21"
+developer: "FlaskFarm Community"
+description: "세븐스플릿 21가지 체크리스트 기반 주식 스크리닝"
+home: "https://github.com/yourusername/7split_checklist_21"
+more: "https://raw.githubusercontent.com/yourusername/7split_checklist_21/main/README.md"
