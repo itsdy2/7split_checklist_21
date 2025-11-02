@@ -18,8 +18,8 @@ def _discover_strategies():
     strategies_dir = os.path.dirname(__file__)
     for filename in os.listdir(strategies_dir):
         if filename.endswith('.py') and not filename.startswith('__'):
-            module_name = f'strategies.{filename[:-3]}'
-            module = importlib.import_module(module_name)
+            module_name = f'.{filename[:-3]}'  # 'strategies.'를 '.'으로 변경
+            module = importlib.import_module(module_name, package='strategies') # package 인자 추가
             for item_name in dir(module):
                 item = getattr(module, item_name)
                 if isinstance(item, type) and issubclass(item, BaseStrategy) and item is not BaseStrategy:
