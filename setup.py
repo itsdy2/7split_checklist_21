@@ -3,7 +3,7 @@
 7split_checklist_21 Plugin Setup
 FlaskFarm 플러그인 설정
 """
-from plugin import *
+# from plugin import *
 
 setting = {
     'filepath': __file__,
@@ -39,10 +39,12 @@ setting = {
         ]
     },
     'setting_menu': None,
-    'default_route': 'basic'
+    'default_route': 'screening'
 }
 
-P = create_plugin_instance(setting)
+# P = create_plugin_instance(setting)
+from .plugin import P 
+P.setup(setting)
 
 try:
     from .mod_basic import ModuleBasic

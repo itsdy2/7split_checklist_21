@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <h3><i class="material-icons">play_arrow</i> 수동 스크리닝 실행</h3>
+            <p class="text-muted">
+                현재 설정된 기본 전략으로 스크리닝을 수동으로 시작합니다.
+                <a href="/7split_checklist_21/base/setting" class="btn btn-sm btn-outline-secondary">
+                    <i class="material-icons" style="font-size:16px;">settings</i> 설정 변경
+                </a>
+            </p>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-body text-center">
+            <button class="btn btn-primary btn-lg" id="run_manual_btn">
+                <i class="material-icons">play_arrow</i> 기본 전략 실행
+            </button>
+            <small id="default_strategy_name" class="form-text text-muted mt-2">(기본 전략: {{ arg.default_strategy }})</small>
+        </div>
+    </div>
+
+    <div id="progress_container" style="display:none;" class="mb-3">
+        <div class="alert alert-info">
+            <strong>스크리닝 진행 중...</strong>
+            <div class="progress mt-2">
+                <div id="progress_bar" class="progress-bar progress-bar-striped progress-bar-animated" 
+                     role="progressbar" style="width: 0%"></div>
+            </div>
+            <p id="progress_text" class="mt-2 mb-0">0 / 0 (0%)</p>
+        </div>
+    </div>
+</div>
+
+<script>
+// 수동 실행 시작
+$('#run_manual_btn').on('click', function() {
+    if (!confirm('기본 전략으로 스크리닝을 시작하시겠습니까?')) {
+        return;
+    }
+    
+    $(this).prop('disabled', true).text('실행 중...');
+    
+    $.ajax({
+        url: '/7split_checklist_21/api/screening/start',
+        type: 'POST',
+        data: { 
+            strategy: '{{ arg.default_strategy }}' // mod_screening.py의 start API는 strategy ID를 받음
+        }, 
+        success: function(response) {
+            if (response.success) {
+                notify('스크리닝이 시작되었습니다.', 'success');
+                $('#progress_container').show();
+            } else {
+                notify('시작 실패: ' + response.message, 'error');
+                $('#run_manual_btn').prop('disabled', false).text('기본 전략 실행');
+            }
+        },
+        error: function() {
+            notify('시작 중 오류가 발생했습니다.', 'error');
+            $('#run_manual_btn').prop('disabled', false).text('기본 전략 실행');
+        }
+    });
+});
+
+// SocketIO 진행 상황 수신 (list.html과 동일)
+if (typeof socket !== 'undefined') {
+    socket.on('7split_screening_progress', function(data) {
+        $('#progress_container').show();
+        $('#progress_bar').css('width', data.percent + '%');
+        $('#progress_text').text(data.current + ' / ' + data.total + ' (' + data.percent + '%)');
+    });
+
+    socket.on('7split_screening_complete', function(data) {
+        $('#progress_container').hide();
+        notify('스크리닝 완료: ' + data.passed + '개 종목 통과', 'success');
+        $('#run_manual_btn').prop('disabled', false).text('기본 전략 실행');
+        
+        // 3초 후 결과 목록 페이지로 이동
+        setTimeout(function() {
+            location.href = '/7split_checklist_21/screening/list';
+        }, 3000);
+    });
+}
+</script>
+
+{% endblock %}

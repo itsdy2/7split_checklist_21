@@ -5,10 +5,11 @@
 """
 from strategies.base_strategy import BaseStrategy
 from logic import Logic
-from framework.logger import get_logger
+# from framework.logger import get_logger  <-- 이 줄을 삭제하고
+from ..plugin import P                     # <-- '..' 점 두 개로 변경합니다.
 
-logger = get_logger(__name__)
-
+# logger = get_logger(__name__)  <-- 이 줄을 삭제하고
+logger = P.logger                # <-- 이 줄을 추가합니다.
 
 class ValueInvestingStrategy(BaseStrategy):
     """가치투자 전략 (저평가 우량주)"""

@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
-from .setup import *
+# from .setup import * <-- 이 줄을 삭제하고
+from .plugin import P   # <-- 이 줄을 추가합니다.
 from .logic import Logic
 from flask import render_template, request, jsonify
+import traceback # (Traceback 임포트 추가)
 
 class ModuleBase(PluginModuleBase):
     def __init__(self, P):
@@ -26,7 +28,7 @@ class ModuleBase(PluginModuleBase):
             # 템플릿 파일명은 '7split_checklist_21_base_setting.html'이어야 합니다.
             return render_template(f'{P.package_name}_{self.name}_{sub}.html', arg=arg, settings=settings, strategies=strategies)
         
-        P.logger.error(f"Unknown menu: {sub}")
+        P.logger.error(f"Unknown menu: {sub}") # P.logger 사용
         return "Not Implemented"
 
     def process_api(self, sub, req):
@@ -65,7 +67,7 @@ class ModuleBase(PluginModuleBase):
                 
             except Exception as e:
                 P.logger.error(f"Setting save error: {str(e)}")
-                P.logger.error(traceback.format_exc())
+                P.logger.error(traceback.format_exc()) # P.logger 사용
                 return jsonify({'success': False, 'message': str(e)})
         return jsonify({'success': False, 'message': 'Unknown API call'})
 

@@ -7,12 +7,15 @@ import time
 import json
 from datetime import datetime, date
 from framework import db, socketio
-from framework.logger import get_logger
+# from framework.logger import get_logger
+from .plugin import P
 
 
 
-logger = get_logger(__name__)
-package_name = '7split_checklist_21'
+# logger = get_logger(__name__)  <-- 이 줄을 삭제하고
+logger = P.logger                # <-- 이 줄을 추가합니다.
+# package_name = '7split_checklist_21' <-- 이 줄을 삭제하고
+package_name = P.package_name    # <-- 이 줄을 추가합니다. (표준 방식)
 
 
 class Logic:

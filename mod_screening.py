@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from .setup import *
+# from .setup import * <-- 이 줄을 삭제하고
+from .plugin import P   # <-- 이 줄을 추가합니다.
 from .logic import Logic
 from .model import StockScreeningResult, ScreeningHistory
 from flask import render_template, request, jsonify, redirect, Response
@@ -96,11 +97,11 @@ class ModuleScreening(PluginModuleBase):
                 return render_template(f'{P.package_name}_{self.name}_{sub}.html', arg=arg, daily_stats=daily_stats, market_stats=market_stats)
 
         except Exception as e:
-            P.logger.error(f"Error in process_menu '{sub}': {str(e)}")
+            P.logger.error(f"Error in process_menu '{sub}': {str(e)}") # P.logger 사용
             P.logger.error(traceback.format_exc())
             return render_template('error.html', error=str(e))
         
-        P.logger.error(f"Unknown menu: {sub}")
+        P.logger.error(f"Unknown menu: {sub}") # P.logger 사용
         return "Not Implemented"
 
     def process_api(self, sub, req):
@@ -168,7 +169,7 @@ class ModuleScreening(PluginModuleBase):
                 return jsonify({'success': True, 'data': data})
 
         except Exception as e:
-            P.logger.error(f"Error in process_api '{sub}': {str(e)}")
+            P.logger.error(f"Error in process_api '{sub}': {str(e)}") # P.logger 사용
             P.logger.error(traceback.format_exc())
             return jsonify({'success': False, 'message': str(e)})
         
