@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-# from .setup import * <-- 이 줄을 삭제하고
-from .plugin import P   # <-- 이 줄을 추가합니다.
+from .setup import *
 from .logic import Logic
 from .model import StockScreeningResult, ScreeningHistory
 from flask import render_template, request, jsonify, redirect, Response

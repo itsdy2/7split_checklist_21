@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# from .setup import * <-- 이 줄을 삭제하고
 from .setup import * 
 from .logic import Logic
 from flask import render_template, request, jsonify
