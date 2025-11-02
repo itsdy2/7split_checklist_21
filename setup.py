@@ -1,133 +1,57 @@
 # -*- coding: utf-8 -*-
-from .setup import * 
-from .logic import Logic
-from flask import render_template, request, jsonify
-import traceback
-import os
+"""
+7split_checklist_21 Plugin Setup
+FlaskFarm 플러그인 설정
+"""
 
-class ModuleBase(PluginModuleBase):
-    def __init__(self, P):
-        super(ModuleBase, self).__init__(P, name='base', first_menu='setting')
-        self.db_default = Logic.db_default
-        Logic.db_init()
+# 먼저 setting 딕셔너리 정의
+setting = {
+    'filepath': __file__,
+    'use_db': True,
+    'use_default_setting': True,
+    'home_module': None,
+    'menu': {
+        'uri': __package__,
+        'name': '세븐스플릿 스크리닝',
+        'list': [
+            {
+                'uri': 'base/setting',
+                'name': '설정',
+            },
+            {
+                'uri': 'screening',
+                'name': '스크리닝',
+                'list': [
+                    {'uri': 'screening/strategies', 'name': '전략 선택'},
+                    {'uri': 'screening/manual', 'name': '수동 실행'},
+                    {'uri': 'screening/list', 'name': '결과 조회'},
+                    {'uri': 'screening/history', 'name': '실행 이력'},
+                    {'uri': 'screening/statistics', 'name': '통계'},
+                ]
+            },
+            {
+                'uri': 'log',
+                'name': '로그'
+            }
+        ]
+    },
+    'setting_menu': None,
+    'default_route': 'normal',
+}
 
-    def process_menu(self, sub, req):
-        arg = P.ModelSetting.to_dict()
-        
-        P.logger.info(f"process_menu called: sub={sub}")
-        
-        try:
-            if sub == 'setting':
-                # 설정 값 로드
-                settings = {}
-                for key in self.db_default.keys():
-                    settings[key] = Logic.get_setting(key)
-                
-                # 전략 정보 로드
-                try:
-                    from strategies import get_strategies_info
-                    strategies = get_strategies_info()
-                except Exception as e:
-                    P.logger.error(f"Failed to load strategies: {str(e)}")
-                    strategies = []
-                
-                arg['settings'] = settings
-                arg['strategies'] = strategies
-                
-                # 템플릿 경로 확인
-                template_name = f'{P.package_name}_{self.name}_{sub}.html'
-                template_path = os.path.join(
-                    os.path.dirname(__file__), 
-                    'templates', 
-                    template_name
-                )
-                
-                P.logger.info(f"Loading template: {template_name}")
-                P.logger.info(f"Template path: {template_path}")
-                P.logger.info(f"Template exists: {os.path.exists(template_path)}")
-                
-                # 템플릿이 없으면 기본 HTML 반환
-                if not os.path.exists(template_path):
-                    P.logger.error(f"Template not found: {template_path}")
-                    return f"""
-                    <div class="container">
-                        <h3>템플릿 파일을 찾을 수 없습니다</h3>
-                        <p>필요한 파일: <code>{template_name}</code></p>
-                        <p>경로: <code>{template_path}</code></p>
-                        <p>templates 폴더에 파일이 있는지 확인하세요.</p>
-                    </div>
-                    """
-                
-                return render_template(
-                    template_name,
-                    arg=arg, 
-                    settings=settings, 
-                    strategies=strategies
-                )
-            
-            else:
-                P.logger.warning(f"Unknown sub menu: {sub}")
-                return f"<div class='container'><h3>알 수 없는 메뉴: {sub}</h3></div>"
-                
-        except Exception as e:
-            error_msg = f"Error in process_menu '{sub}': {str(e)}"
-            P.logger.error(error_msg)
-            P.logger.error(traceback.format_exc())
-            return f"""
-            <div class="container">
-                <div class="alert alert-danger">
-                    <h4>오류 발생</h4>
-                    <p>{str(e)}</p>
-                    <pre>{traceback.format_exc()}</pre>
-                </div>
-            </div>
-            """
+# plugin 모듈 임포트
+from plugin import *
 
-    def process_command(self, command, arg1, arg2, arg3, req):
-        """FlaskFarm의 command 처리"""
-        P.logger.info(f"process_command called: command={command}")
-        
-        try:
-            if command == 'setting_save':
-                form_data = req.form.to_dict()
-                
-                # 설정 저장
-                for key in form_data:
-                    if not (key.startswith('cron_') or key.startswith('enabled_')):
-                        Logic.set_setting(key, form_data[key])
-                
-                # 개별 조건 스케줄 저장
-                schedules = []
-                for key, value in form_data.items():
-                    if key.startswith('cron_'):
-                        parts = key.split('_')
-                        if len(parts) >= 3:
-                            strategy_id = parts[1]
-                            condition_number = int(parts[2])
-                            cron_expression = value
-                            is_enabled = form_data.get(f'enabled_{strategy_id}_{condition_number}') == 'True'
-                            schedules.append({
-                                'strategy_id': strategy_id,
-                                'condition_number': condition_number,
-                                'cron_expression': cron_expression,
-                                'is_enabled': is_enabled
-                            })
-                
-                if schedules:
-                    Logic.save_condition_schedules(schedules)
-                
-                # 스케줄러 재시작
-                Logic.scheduler_stop()
-                Logic.scheduler_start()
-                
-                return jsonify({'ret': 'success', 'msg': '설정이 저장되었습니다.'})
-                
-        except Exception as e:
-            P.logger.error(f"Command error: {str(e)}")
-            P.logger.error(traceback.format_exc())
-            return jsonify({'ret': 'error', 'msg': str(e)})
-        
-        return jsonify({'ret': 'error', 'msg': 'Unknown command'})
+# P 인스턴스 생성
+P = create_plugin_instance(setting)
 
-    def scheduler_function(self):
-        Logic.scheduler_start()
+# 모듈 임포트 및 등록
+try:
+    from .mod_base import ModuleBase
+    from .mod_screening import ModuleScreening
+    
+    P.set_module_list([ModuleBase, ModuleScreening])
+    
+except Exception as e:
+    P.logger.error(f'Exception:{str(e)}')
+    P.logger.error(traceback.format_exc())
