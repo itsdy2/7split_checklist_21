@@ -3,7 +3,6 @@ from .setup import *
 from .logic import Logic
 from .model import StockScreeningResult, ScreeningHistory
 from flask import render_template, request, jsonify, redirect, Response
-from framework.job import Job
 from datetime import datetime, timedelta
 from sqlalchemy import func
 import csv
