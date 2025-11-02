@@ -3,7 +3,8 @@
 7split_checklist_21 Plugin Setup
 FlaskFarm 플러그인 설정
 """
-# from plugin import *
+import traceback
+from plugin import * # 프레임워크의 plugin 모듈을 사용합니다.
 
 setting = {
     'filepath': __file__,
@@ -15,8 +16,8 @@ setting = {
         'name': '세븐스플릿 스크리닝',
         'list': [
             {
-                'uri': 'basic',
-                'name': '기본',
+                'uri': 'base',
+                'name': '설정',
                 'list': [
                     {'uri': 'setting', 'name': '설정'},
                 ]
@@ -42,15 +43,14 @@ setting = {
     'default_route': 'screening'
 }
 
-# P = create_plugin_instance(setting)
-from .plugin import P 
-P.setup(setting)
+# P 인스턴스를 표준 방식으로 생성합니다.
+P = create_plugin_instance(setting)
 
 try:
-    from .mod_basic import ModuleBasic
+    from .mod_base import ModuleBase
     from .mod_screening import ModuleScreening
     
-    P.set_module_list([ModuleBasic, ModuleScreening])
+    P.set_module_list([ModuleBase, ModuleScreening])
     
 except Exception as e:
     P.logger.error(f'Exception:{str(e)}')

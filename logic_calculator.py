@@ -5,11 +5,9 @@ F-Score, 유보율 등 재무지표 계산
 """
 import pandas as pd
 import numpy as np
-# from framework.logger import get_logger  <-- 이 줄을 삭제하고
-from .plugin import P                     # <-- 이 줄을 추가합니다.
+from .setup import *
 
-# logger = get_logger(__name__)  <-- 이 줄을 삭제하고
-logger = P.logger                # <-- 이 줄을 추가합니다.
+logger = P.logger  
 
 
 class Calculator:

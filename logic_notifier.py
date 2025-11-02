@@ -6,11 +6,9 @@ Discord Webhook을 통한 알림 전송
 import json
 import requests
 from datetime import datetime
-# from framework.logger import get_logger  <-- 이 줄을 삭제하고
-from .plugin import P                     # <-- 이 줄을 추가합니다.
+from .setup import *
 
-# logger = get_logger(__name__)  <-- 이 줄을 삭제하고
-logger = P.logger                # <-- 이 줄을 추가합니다.
+logger = P.logger    
 
 
 class Notifier:

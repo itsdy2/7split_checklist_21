@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # from .setup import * <-- 이 줄을 삭제하고
-from .plugin import P   # <-- 이 줄을 추가합니다.
+from .setup import * 
 from .logic import Logic
 from flask import render_template, request, jsonify
 import traceback # (Traceback 임포트 추가)
