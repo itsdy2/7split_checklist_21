@@ -9,7 +9,7 @@ from io import StringIO
 
 class ModuleScreening(PluginModuleBase):
     def __init__(self, P):
-        super(ModuleScreening, self).__init__(P, name='screening', first_menu=None)
+        super(ModuleScreening, self).__init__(P, name='screening', first_menu='strategies')
         self.db_default = Logic.db_default
         P.logger.info("ModuleScreening initialized")
 
