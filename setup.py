@@ -10,7 +10,7 @@ setting = {
     'filepath': __file__,
     'use_db': True,
     'use_default_setting': True,
-    'home_module': 'base',  # base를 홈 모듈로 설정
+    'home_module': None,  # base를 홈 모듈로 설정
     'menu': {
         'uri': __package__,
         'name': '세븐스플릿',
