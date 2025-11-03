@@ -5,7 +5,7 @@ from .logic import Logic
 class ModuleBase(PluginModuleBase):
     def __init__(self, P):
         # first_menu를 None으로 설정
-        super(ModuleBase, self).__init__(P, name='base', first_menu=None)
+        super(ModuleBase, self).__init__(P, name='base', first_menu='setting')
         self.db_default = Logic.db_default
         Logic.db_init()
         P.logger.info("ModuleBase initialized")
