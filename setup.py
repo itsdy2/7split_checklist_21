@@ -15,29 +15,36 @@ setting = {
         'uri': __package__,
         'name': '세븐스플릿',
         'list': [
-            {
-                'uri': 'base',
-                'name': '설정',
-                'list': [
-                    {'uri': 'setting', 'name': '기본설정'},
-                ]
-            },
-            {
-                'uri': 'screening',
-                'name': '스크리닝',
-                'list': [
-                    {'uri': 'strategies', 'name': '전략선택'},
-                    {'uri': 'manual', 'name': '수동실행'},
-                    {'uri': 'list', 'name': '결과조회'},
-                    {'uri': 'history', 'name': '실행이력'},
-                    {'uri': 'statistics', 'name': '통계'},
-                ]
-            },
-            {
-                'uri': 'log',
-                'name': '로그'
-            }
+        {
+            'uri': 'base/setting',
+            'name': '설정'
+        },
+        {
+            'uri': 'screening/strategies',
+            'name': '전략선택'
+        },
+        {
+            'uri': 'screening/manual',
+            'name': '수동실행'
+        },
+        {
+            'uri': 'screening/list',
+            'name': '결과조회'
+        },
+        {
+            'uri': 'screening/history',
+            'name': '실행이력'
+        },
+        {
+            'uri': 'screening/statistics',
+            'name': '통계'
+        },
+        {
+            'uri': 'log',
+            'name': '로그'
+        }
         ]
+        
     },
     'setting_menu': None,
     'default_route': 'normal',
