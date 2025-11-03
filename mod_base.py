@@ -1,39 +1,69 @@
 # -*- coding: utf-8 -*-
 from .setup import * 
 from .logic import Logic
-from flask import render_template, request, jsonify
-import traceback # (Traceback 임포트 추가)
 
 class ModuleBase(PluginModuleBase):
     def __init__(self, P):
-        super(ModuleBase, self).__init__(P, name='base', first_menu='setting')
-        # 'Logic' 클래스에서 db_default를 가져옵니다.
+        # first_menu를 None으로 설정
+        super(ModuleBase, self).__init__(P, name='base', first_menu=None)
         self.db_default = Logic.db_default
-        # Logic 클래스의 db_init을 호출합니다. (플러그인 로드 시 1회 실행)
         Logic.db_init()
+        P.logger.info("ModuleBase initialized")
 
     def process_menu(self, sub, req):
+        P.logger.info(f"ModuleBase.process_menu called: sub={sub}")
         arg = P.ModelSetting.to_dict()
-        if sub == 'setting':
-            # GET 요청 시 설정 페이지를 렌더링합니다.
-            settings = {}
-            for key in self.db_default.keys():
-                settings[key] = Logic.get_setting(key)
-            strategies = Logic.get_strategies_metadata()
-            
-            arg['settings'] = settings
-            arg['strategies'] = strategies
-            
-            # 템플릿 파일명은 '7split_checklist_21_base_setting.html'이어야 합니다.
-            return render_template(f'{P.package_name}_{self.name}_{sub}.html', arg=arg, settings=settings, strategies=strategies)
         
-        P.logger.error(f"Unknown menu: {sub}") # P.logger 사용
-        return "Not Implemented"
-
-    def process_api(self, sub, req):
-        # 템플릿의 저장 버튼 AJAX 호출이 이 'setting_save'를 호출해야 합니다.
-        if sub == 'setting_save':
+        # sub가 None이거나 빈 문자열이면 setting으로 리다이렉트
+        if not sub:
+            sub = 'setting'
+            P.logger.info(f"sub is empty, redirecting to: {sub}")
+        
+        if sub == 'setting':
             try:
+                # 설정 값 로드
+                settings = {}
+                for key in self.db_default.keys():
+                    settings[key] = Logic.get_setting(key)
+                
+                # 전략 정보 로드
+                try:
+                    from strategies import get_strategies_info
+                    strategies = get_strategies_info()
+                    P.logger.info(f"Loaded {len(strategies)} strategies")
+                except Exception as e:
+                    P.logger.error(f"Failed to load strategies: {str(e)}")
+                    strategies = []
+                
+                arg['settings'] = settings
+                arg['strategies'] = strategies
+                
+                template_name = f'{P.package_name}_{self.name}_{sub}.html'
+                P.logger.info(f"Rendering template: {template_name}")
+                
+                return render_template(template_name, arg=arg, settings=settings, strategies=strategies)
+                
+            except Exception as e:
+                P.logger.error(f"Error in setting menu: {str(e)}")
+                P.logger.error(traceback.format_exc())
+                return f"""
+                <div class='container'>
+                    <div class='alert alert-danger'>
+                        <h3>오류 발생</h3>
+                        <p>{str(e)}</p>
+                        <pre>{traceback.format_exc()}</pre>
+                    </div>
+                </div>
+                """
+        
+        P.logger.warning(f"Unknown sub menu: {sub}")
+        return f"<div class='container'><h3>알 수 없는 메뉴: {sub}</h3></div>"
+
+    def process_command(self, command, arg1, arg2, arg3, req):
+        P.logger.info(f"ModuleBase.process_command: {command}")
+        
+        try:
+            if command == 'setting_save':
                 form_data = req.form.to_dict()
                 
                 # 설정 저장
@@ -46,30 +76,33 @@ class ModuleBase(PluginModuleBase):
                 for key, value in form_data.items():
                     if key.startswith('cron_'):
                         parts = key.split('_')
-                        strategy_id = parts[1]
-                        condition_number = int(parts[2])
-                        cron_expression = value
-                        is_enabled = form_data.get(f'enabled_{strategy_id}_{condition_number}') == 'True'
-                        schedules.append({
-                            'strategy_id': strategy_id,
-                            'condition_number': condition_number,
-                            'cron_expression': cron_expression,
-                            'is_enabled': is_enabled
-                        })
-                Logic.save_condition_schedules(schedules)
+                        if len(parts) >= 3:
+                            strategy_id = parts[1]
+                            condition_number = int(parts[2])
+                            cron_expression = value
+                            is_enabled = form_data.get(f'enabled_{strategy_id}_{condition_number}') == 'True'
+                            schedules.append({
+                                'strategy_id': strategy_id,
+                                'condition_number': condition_number,
+                                'cron_expression': cron_expression,
+                                'is_enabled': is_enabled
+                            })
+                
+                if schedules:
+                    Logic.save_condition_schedules(schedules)
                 
                 # 스케줄러 재시작
                 Logic.scheduler_stop()
                 Logic.scheduler_start()
                 
-                return jsonify({'success': True, 'message': '설정이 저장되었습니다.'})
+                return jsonify({'ret': 'success', 'msg': '설정이 저장되었습니다.'})
                 
-            except Exception as e:
-                P.logger.error(f"Setting save error: {str(e)}")
-                P.logger.error(traceback.format_exc()) # P.logger 사용
-                return jsonify({'success': False, 'message': str(e)})
-        return jsonify({'success': False, 'message': 'Unknown API call'})
+        except Exception as e:
+            P.logger.error(f"Command error: {str(e)}")
+            P.logger.error(traceback.format_exc())
+            return jsonify({'ret': 'error', 'msg': str(e)})
+        
+        return jsonify({'ret': 'error', 'msg': 'Unknown command'})
 
     def scheduler_function(self):
-        # 플러그인 로드 시 Logic의 스케줄러를 시작합니다.
         Logic.scheduler_start()
