@@ -4,8 +4,8 @@ from .logic import Logic
 
 class ModuleBase(PluginModuleBase):
     def __init__(self, P):
-        # first_menu를 None으로 설정
-        super(ModuleBase, self).__init__(P, name='base', first_menu='setting')
+        # first_menu 제거 - FlaskFarm이 자동으로 첫 번째 sub 메뉴 사용
+        super(ModuleBase, self).__init__(P, name='base', first_menu=None)
         self.db_default = Logic.db_default
         Logic.db_init()
         P.logger.info("ModuleBase initialized")
@@ -14,10 +14,10 @@ class ModuleBase(PluginModuleBase):
         P.logger.info(f"ModuleBase.process_menu called: sub={sub}")
         arg = P.ModelSetting.to_dict()
         
-        # sub가 None이거나 빈 문자열이면 setting으로 리다이렉트
-        if not sub:
+        # sub가 None이거나 빈 문자열이면 setting으로 설정
+        if not sub or sub == 'base':
             sub = 'setting'
-            P.logger.info(f"sub is empty, redirecting to: {sub}")
+            P.logger.info(f"sub redirected to: {sub}")
         
         if sub == 'setting':
             try:
@@ -33,6 +33,7 @@ class ModuleBase(PluginModuleBase):
                     P.logger.info(f"Loaded {len(strategies)} strategies")
                 except Exception as e:
                     P.logger.error(f"Failed to load strategies: {str(e)}")
+                    P.logger.error(traceback.format_exc())
                     strategies = []
                 
                 arg['settings'] = settings
@@ -50,7 +51,7 @@ class ModuleBase(PluginModuleBase):
                 <div class='container'>
                     <div class='alert alert-danger'>
                         <h3>오류 발생</h3>
-                        <p>{str(e)}</p>
+                        <p><strong>에러:</strong> {str(e)}</p>
                         <pre>{traceback.format_exc()}</pre>
                     </div>
                 </div>
@@ -60,7 +61,7 @@ class ModuleBase(PluginModuleBase):
         return f"<div class='container'><h3>알 수 없는 메뉴: {sub}</h3></div>"
 
     def process_command(self, command, arg1, arg2, arg3, req):
-        P.logger.info(f"ModuleBase.process_command: {command}")
+        P.logger.info(f"ModuleBase.process_command: command={command}")
         
         try:
             if command == 'setting_save':
