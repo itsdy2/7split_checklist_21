@@ -8,8 +8,8 @@
                     <h3 class="card-title">스크리닝 통계</h3>
                 </div>
                 <div class="card-body">
-                    {% if error %}
-                        <div class="alert alert-danger">{{ error }}</div>
+                    {% if arg.error %}
+                        <div class="alert alert-danger">{{ arg.error }}</div>
                     {% else %}
                         <h4>일자별 통과 종목 수 (최근 30일)</h4>
                         <canvas id="dailyStatsChart"></canvas>
@@ -31,10 +31,10 @@
         var dailyStatsChart = new Chart(dailyCtx, {
             type: 'bar',
             data: {
-                labels: [{% for stat in daily_stats %}'{{ stat.screening_date }}',{% endfor %}],
+                labels: {{ arg.daily_stats | map(attribute='screening_date') | list | tojson | safe }},
                 datasets: [{
                     label: '통과 종목 수',
-                    data: [{% for stat in daily_stats %}{{ stat.passed or 0 }},{% endfor %}],
+                    data: {{ arg.daily_stats | map(attribute='passed') | list | tojson | safe }},
                     backgroundColor: 'rgba(75, 192, 192, 0.2)',
                     borderColor: 'rgba(75, 192, 192, 1)',
                     borderWidth: 1
@@ -54,10 +54,10 @@
         var marketStatsChart = new Chart(marketCtx, {
             type: 'pie',
             data: {
-                labels: [{% for stat in market_stats %}'{{ stat.market }}',{% endfor %}],
+                labels: {{ arg.market_stats | map(attribute='market') | list | tojson | safe }},
                 datasets: [{
                     label: '통과 종목 수',
-                    data: [{% for stat in market_stats %}{{ stat.passed or 0 }},{% endfor %}],
+                    data: {{ arg.market_stats | map(attribute='passed') | list | tojson | safe }},
                     backgroundColor: [
                         'rgba(255, 99, 132, 0.2)',
                         'rgba(54, 162, 235, 0.2)',

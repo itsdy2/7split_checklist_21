@@ -17,9 +17,12 @@ setting = {
         # V V V 수정: 메뉴 리스트 구조 변경 V V V
         'list': [
             {
-                # 'uri': 'base/setting' 대신 모듈 이름인 'base' 사용
-                'uri': 'base', 
-                'name': '설정'
+                'uri': 'base',
+                'name': '설정',
+                'list': [
+                    { 'uri': 'setting', 'name': '환경설정' },
+                    { 'uri': 'help', 'name': '도움말' }
+                ]
             },
             {
                 # 'screening' 모듈을 부모로 하는 드롭다운 메뉴로 변경
@@ -30,6 +33,10 @@ setting = {
                         # 부모 'screening'이 있으므로 'strategies'만 명시
                         'uri': 'strategies', 
                         'name': '전략선택'
+                    },
+                    {
+                        'uri': 'scaffold',
+                        'name': '전략 스캐폴딩'
                     },
                     {
                         'uri': 'manual', 

@@ -25,6 +25,62 @@
         </div>
     </div>
 
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">새 전략 추가 가이드</h5>
+            <button class="btn btn-sm btn-outline-secondary" type="button" data-toggle="collapse" data-target="#devGuide" aria-expanded="false" aria-controls="devGuide">펼치기/접기</button>
+        </div>
+        <div id="devGuide" class="collapse">
+            <div class="card-body">
+                <ol class="mb-3">
+                    <li><code>strategies</code> 폴더에 새 파일 생성 (예: <code>my_strategy.py</code>)</li>
+                    <li><code>BaseStrategy</code> 상속 클래스 구현: <code>strategy_id</code>, <code>strategy_name</code>, <code>version</code>, <code>required_data</code>, <code>conditions</code>, <code>apply_filters</code></li>
+                    <li>서버 재시작 없이도 자동 로드됩니다(동적 디스커버리). 충돌 방지를 위해 <code>strategy_id</code>는 고유하게 지정하세요.</li>
+                </ol>
+                <pre class="border p-3 bg-light" style="white-space: pre;">
+from strategies.base_strategy import BaseStrategy
+
+class MyStrategy(BaseStrategy):
+    strategy_id = 'my_strategy'
+    strategy_name = '나의 전략'
+    version = '1.0.0'
+    # 필요 데이터 집합: 'market', 'financial', 'disclosure', 'major_shareholder' 중 선택
+    required_data = {'market', 'financial'}
+
+    # 조건 설명 사전: {번호: 설명}
+    conditions = {
+        1: '시가총액 ≥ 1000억원',
+        2: 'PER 5~20',
+    }
+
+    def get_info(self):
+        return {
+            'strategy_id': self.strategy_id,
+            'strategy_name': self.strategy_name,
+            'version': self.version,
+            'description': '간단한 샘플 전략',
+            'conditions': self.conditions,
+        }
+
+    def apply_filters(self, stock):
+        # stock dict: market/financial 등 수집값 포함
+        passed = True
+        detail = {}
+        detail[1] = bool(stock.get('market_cap', 0) >= 1000_0000_00)  # 1000억원
+        detail[2] = False
+        per = stock.get('per')
+        if per is not None:
+            detail[2] = 5 <= per <= 20
+        passed = all(detail.values())
+        return passed, detail
+                </pre>
+                <div class="small text-muted">
+                    더 발전된 예시는 잘 만들어진 샘플 플러그인 구조를 참고하세요: <a href="https://github.com/halfaider/flaskfarmaider" target="_blank">flaskfarmaider</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="progress_container" style="display:none;" class="mb-3">
         <div class="alert alert-info">
             <strong>스크리닝 진행 중...</strong>

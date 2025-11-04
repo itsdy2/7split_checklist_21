@@ -15,12 +15,19 @@ class ModuleBase(PluginModuleBase):
         P.logger.info(f"ModuleBase.process_menu called: sub={sub}")
         arg = P.ModelSetting.to_dict()
         
-        # 'base' 모듈은 'setting' 페이지만을 다룹니다.
-        # setup.py에서 'home_module: base'로 설정했기 때문에
-        # /7split_checklist_21/base 로 접속 시 sub가 None이 됩니다.
-        # 이 경우 'setting'으로 처리합니다.
+        # 기본 페이지 라우팅
         if not sub or sub == 'base' or sub == 'setting':
             sub = 'setting'
+        elif sub == 'help':
+            # 도움말 템플릿은 모듈명이 포함되지 않은 파일명 규칙을 사용
+            try:
+                template_name = f"{P.package_name}_help.html"
+                P.logger.info(f"Rendering template: {template_name}")
+                return render_template(template_name, arg=arg)
+            except Exception as e:
+                P.logger.error(f"Error in help menu: {str(e)}")
+                P.logger.error(traceback.format_exc())
+                return f"<div class='container'><h3>도움말 로드 오류</h3><pre>{traceback.format_exc()}</pre></div>"
         else:
             P.logger.warning(f"Unknown sub menu in base module: {sub}")
             return f"<div class='container'><h3>알 수 없는 메뉴: {sub}</h3></div>"

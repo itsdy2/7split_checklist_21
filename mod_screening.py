@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 from plugin import *
+from framework import db
 from .logic import Logic
 from .model import StockScreeningResult, ScreeningHistory
 from datetime import datetime, timedelta
 from sqlalchemy import func
 import csv
 from io import StringIO
+import os
 
 class ModuleScreening(PluginModuleBase):
     def __init__(self, P):
@@ -116,6 +118,9 @@ class ModuleScreening(PluginModuleBase):
                 arg['market_stats'] = db.session.query(StockScreeningResult.market, func.count(StockScreeningResult.id).label('total'), func.sum(func.cast(StockScreeningResult.passed, db.Integer)).label('passed')).filter(StockScreeningResult.passed == True).group_by(StockScreeningResult.market).all()
                 return render_template(template_name, arg=arg)
             
+            elif sub == 'scaffold':
+                return render_template(template_name, arg=arg)
+            
             else:
                 P.logger.warning(f"Unknown sub menu: {sub}")
                 return f"<div class='container'><h3>알 수 없는 메뉴: {sub}</h3></div>"
@@ -180,6 +185,90 @@ class ModuleScreening(PluginModuleBase):
                     writer.writerow([r.code, r.name, r.market, r.market_cap // 100000000 if r.market_cap else 0, r.per, r.pbr, r.roe_avg_3y, r.fscore, r.div_yield, r.screening_date])
                 output.seek(0)
                 return Response(output.getvalue(), mimetype='text/csv', headers={'Content-Disposition': f'attachment; filename=7split_screening_{date_filter or "all"}.csv'})
+            elif sub == 'scaffold_create':
+                data = req.form if req.form else req.json
+                strategy_id = (data.get('strategy_id') or '').strip()
+                strategy_name = (data.get('strategy_name') or '').strip()
+                version = (data.get('version') or '1.0.0').strip()
+                required_data = data.get('required_data') or ''
+                conditions_text = data.get('conditions') or ''
+
+                if not strategy_id or not strategy_name:
+                    return jsonify({'ret': 'error', 'msg': 'strategy_id와 strategy_name은 필수입니다.'})
+                if not strategy_id.replace('_', '').isalnum():
+                    return jsonify({'ret': 'error', 'msg': 'strategy_id는 영문/숫자/밑줄만 허용됩니다.'})
+
+                base_dir = os.path.dirname(os.path.abspath(__file__))
+                strategies_dir = os.path.join(base_dir, 'strategies')
+                target_path = os.path.join(strategies_dir, f"{strategy_id}.py")
+                if os.path.exists(target_path):
+                    return jsonify({'ret': 'error', 'msg': '동일한 파일이 이미 존재합니다.'})
+
+                def to_camel(s):
+                    return ''.join([p.capitalize() for p in s.split('_')])
+                class_name = f"{to_camel(strategy_id)}Strategy"
+
+                req_set = [x.strip() for x in str(required_data).replace('\n', ',').split(',') if x.strip()]
+                req_set = [x for x in req_set if x in ['market', 'financial', 'disclosure', 'major_shareholder']]
+                if not req_set:
+                    req_set = ['market']
+
+                condition_lines = [line.strip() for line in str(conditions_text).split('\n') if line.strip()]
+                cond_pairs = []
+                for line in condition_lines:
+                    if ':' in line:
+                        num, desc = line.split(':', 1)
+                        try:
+                            num_i = int(num.strip())
+                            cond_pairs.append((num_i, desc.strip()))
+                        except:
+                            pass
+                if not cond_pairs:
+                    cond_pairs = [(1, '조건 설명을 여기에 작성하세요')]
+
+                conditions_dict_lines = [f"        {k}: '{v}'," for k, v in cond_pairs]
+                required_data_items = ', '.join([f"'{x}'" for x in req_set])
+
+                template_code = f"""
+from strategies.base_strategy import BaseStrategy
+
+
+class {class_name}(BaseStrategy):
+    strategy_id = '{strategy_id}'
+    strategy_name = '{strategy_name}'
+    version = '{version}'
+    required_data = {{{required_data_items}}}
+
+    conditions = {{
+{chr(10).join(conditions_dict_lines)}
+    }}
+
+    def get_info(self):
+        return {{
+            'strategy_id': self.strategy_id,
+            'strategy_name': self.strategy_name,
+            'version': self.version,
+            'description': '{strategy_name} 전략',
+            'conditions': self.conditions,
+        }}
+
+    def apply_filters(self, stock):
+        detail = {{}}
+        passed = True
+        # TODO: 각 조건 로직을 구현하세요
+        for num in self.conditions.keys():
+            detail[num] = True
+        passed = all(detail.values())
+        return passed, detail
+"""
+
+                try:
+                    with open(target_path, 'w', encoding='utf-8') as f:
+                        f.write(template_code.lstrip('\n'))
+                except Exception as e:
+                    return jsonify({'ret': 'error', 'msg': f'파일 생성 실패: {str(e)}'})
+
+                return jsonify({'ret': 'success', 'msg': '전략 파일이 생성되었습니다.', 'file': target_path})
         except Exception as e:
             P.logger.error(f"API error: {str(e)}")
             P.logger.error(traceback.format_exc())
