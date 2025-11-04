@@ -19,7 +19,8 @@ def _discover_strategies():
     for filename in os.listdir(strategies_dir):
         if filename.endswith('.py') and not filename.startswith('__'):
             module_name = f'.{filename[:-3]}'  # 'strategies.'를 '.'으로 변경
-            module = importlib.import_module(module_name, package='strategies') # package 인자 추가
+            # 패키지 내부에서 상대 임포트로 로드 (플러그인 패키지 컨텍스트 호환)
+            module = importlib.import_module(module_name, package=__name__)
             for item_name in dir(module):
                 item = getattr(module, item_name)
                 if isinstance(item, type) and issubclass(item, BaseStrategy) and item is not BaseStrategy:

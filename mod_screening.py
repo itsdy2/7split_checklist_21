@@ -157,7 +157,7 @@ class ModuleScreening(PluginModuleBase):
                 for h in histories:
                     strategy_name = 'N/A'
                     if h.strategy_name:
-                        from strategies import get_strategy
+                        from .strategies import get_strategy
                         strategy = get_strategy(h.strategy_name)
                         if strategy: 
                             strategy_name = strategy.strategy_name

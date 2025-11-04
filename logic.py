@@ -68,7 +68,7 @@ class Logic:
     @staticmethod
     def db_init():
         """DB 초기화"""
-        from model import ModelSetting
+        from .model import ModelSetting
         try:
             for key, value in Logic.db_default.items():
                 if db.session.query(ModelSetting).filter_by(key=key).count() == 0:
@@ -83,7 +83,7 @@ class Logic:
     @staticmethod
     def get_setting(key):
         """설정 값 가져오기"""
-        from model import ModelSetting
+        from .model import ModelSetting
         try:
             setting = db.session.query(ModelSetting).filter_by(key=key).first()
             if setting:
@@ -97,7 +97,7 @@ class Logic:
     @staticmethod
     def set_setting(key, value):
         """설정 값 저장"""
-        from model import ModelSetting
+        from .model import ModelSetting
         try:
             setting = db.session.query(ModelSetting).filter_by(key=key).first()
             if setting:
@@ -115,14 +115,14 @@ class Logic:
     @staticmethod
     def get_available_strategies():
         """사용 가능한 전략 목록"""
-        from strategies import get_all_strategies
+        from .strategies import get_all_strategies
         return get_all_strategies()
     
     
     @staticmethod
     def get_strategies_metadata():
         """전략 메타데이터 목록"""
-        from strategies import get_strategies_info
+        from .strategies import get_strategies_info
         return get_strategies_info()
     
     
@@ -138,13 +138,13 @@ class Logic:
         Returns:
             dict: 실행 결과
         """
-        from strategies import get_strategy
-        from model import StockScreeningResult, ScreeningHistory, FilterDetail, ModelSetting
-        from logic_collector import DataCollector
-        from logic_calculator import Calculator
-        from logic_notifier import Notifier
+        from .strategies import get_strategy
+        from .model import StockScreeningResult, ScreeningHistory, FilterDetail, ModelSetting
+        from .logic_collector import DataCollector
+        from .logic_calculator import Calculator
+        from .logic_notifier import Notifier
         start_time = time.time()
-        from strategies import get_strategy
+        from .strategies import get_strategy
         
         # 기본 전략 설정
         if strategy_id is None:
