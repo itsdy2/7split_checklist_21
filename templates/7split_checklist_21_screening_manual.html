@@ -7,7 +7,9 @@
             <h3><i class="material-icons">play_arrow</i> 수동 스크리닝 실행</h3>
             <p class="text-muted">
                 현재 설정된 기본 전략으로 스크리닝을 수동으로 시작합니다.
-                <a href="/7split_checklist_21/base/setting" class="btn btn-sm btn-outline-secondary">
+                <!-- V V V 수정: 설정 페이지 링크 변경 V V V -->
+                <a href="/7split_checklist_21/base" class="btn btn-sm btn-outline-secondary">
+                <!-- ^ ^ ^ 수정: 설정 페이지 링크 변경 ^ ^ ^ -->
                     <i class="material-icons" style="font-size:16px;">settings</i> 설정 변경
                 </a>
             </p>
@@ -51,7 +53,7 @@ $('#run_manual_btn').on('click', function() {
             strategy: '{{ arg.default_strategy }}' // mod_screening.py의 start API는 strategy ID를 받음
         }, 
         success: function(response) {
-            if (response.success) {
+            if (response.ret === 'success') {
                 notify('스크리닝이 시작되었습니다.', 'success');
                 $('#progress_container').show();
             } else {
@@ -81,7 +83,9 @@ if (typeof socket !== 'undefined') {
         
         // 3초 후 결과 목록 페이지로 이동
         setTimeout(function() {
+            // V V V 수정: 결과 페이지 링크 변경 V V V
             location.href = '/7split_checklist_21/screening/list';
+            // ^ ^ ^ 수정: 결과 페이지 링크 변경 ^ ^ ^
         }, 3000);
     });
 }
