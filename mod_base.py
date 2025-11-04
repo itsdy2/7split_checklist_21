@@ -5,7 +5,7 @@ from .logic import Logic
 class ModuleBase(PluginModuleBase):
     def __init__(self, P):
         # first_menu 제거 - FlaskFarm이 자동으로 첫 번째 sub 메뉴 사용
-        super(ModuleBase, self).__init__(P, name='base', first_menu=None)
+        super(ModuleBase, self).__init__(P, name='base', first_menu='setting')
         self.db_default = Logic.db_default
         Logic.db_init()
         P.logger.info("ModuleBase initialized")
