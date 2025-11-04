@@ -104,33 +104,33 @@ class ModuleBase(PluginModuleBase):
                 
                 # 설정 저장
                 for key in form_data:
-                    if not (key.startswith('cron_') or key.startswith('enabled_')):
+                    # if not (key.startswith('cron_') or key.startswith('enabled_')):
                         Logic.set_setting(key, form_data[key])
                         P.logger.debug(f"setting_save update: {key}={_mask(key, form_data[key])}")
                 
-                # 개별 조건 스케줄 저장
-                schedules = []
-                for key, value in form_data.items():
-                    if key.startswith('cron_'):
-                        parts = key.split('_')
-                        if len(parts) >= 3:
-                            strategy_id = parts[1]
-                            condition_number = int(parts[2])
-                            cron_expression = value
-                            enabled_val = form_data.get(f'enabled_{strategy_id}_{condition_number}')
-                            is_enabled = str(enabled_val).lower() in ['true', 'on', '1']
-                            schedules.append({
-                                'strategy_id': strategy_id,
-                                'condition_number': condition_number,
-                                'cron_expression': cron_expression,
-                                'is_enabled': is_enabled
-                            })
-                if schedules:
-                    P.logger.info(f"setting_save schedules parsed: {len(schedules)} items")
+                # # 개별 조건 스케줄 저장
+                # schedules = []
+                # for key, value in form_data.items():
+                #     if key.startswith('cron_'):
+                #         parts = key.split('_')
+                #         if len(parts) >= 3:
+                #             strategy_id = parts[1]
+                #             condition_number = int(parts[2])
+                #             cron_expression = value
+                #             enabled_val = form_data.get(f'enabled_{strategy_id}_{condition_number}')
+                #             is_enabled = str(enabled_val).lower() in ['true', 'on', '1']
+                #             schedules.append({
+                #                 'strategy_id': strategy_id,
+                #                 'condition_number': condition_number,
+                #                 'cron_expression': cron_expression,
+                #                 'is_enabled': is_enabled
+                #             })
+                # if schedules:
+                #     P.logger.info(f"setting_save schedules parsed: {len(schedules)} items")
                 
-                if schedules:
-                    if not Logic.save_condition_schedules(schedules):
-                        P.logger.warning('Failed to save condition schedules; continuing without scheduler update')
+                # if schedules:
+                #     if not Logic.save_condition_schedules(schedules):
+                #         P.logger.warning('Failed to save condition schedules; continuing without scheduler update')
                 
                 # 스케줄러 재시작
                 try:
