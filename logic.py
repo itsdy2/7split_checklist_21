@@ -6,6 +6,7 @@
 import time
 import json
 from datetime import datetime, date
+from flask import has_app_context
 from framework import db, socketio
 from .setup import *
 
@@ -68,6 +69,10 @@ class Logic:
     @staticmethod
     def db_init():
         """DB 초기화"""
+        # 앱 컨텍스트 외부에서는 DB 작업을 수행하지 않음
+        if not has_app_context():
+            logger.warning('db_init skipped: no application context')
+            return
         from .model import ModelSetting
         try:
             for key, value in Logic.db_default.items():
@@ -77,7 +82,10 @@ class Logic:
             logger.info("Database initialized")
         except Exception as e:
             logger.error(f"DB init error: {str(e)}")
-            db.session.rollback()
+            try:
+                db.session.rollback()
+            except Exception:
+                pass
     
     
     @staticmethod

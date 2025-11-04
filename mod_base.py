@@ -8,11 +8,15 @@ class ModuleBase(PluginModuleBase):
         # 기본 진입 서브를 명확히 지정하여 라우터가 템플릿으로 진입하도록 함
         super(ModuleBase, self).__init__(P, name='base', first_menu='setting')
         self.db_default = Logic.db_default
-        Logic.db_init()
         P.logger.info("ModuleBase initialized")
 
     def process_menu(self, sub, req):
         P.logger.info(f"ModuleBase.process_menu called: sub={sub}")
+        # 요청 컨텍스트 내에서 DB 초기화 수행 (app context 보장)
+        try:
+            Logic.db_init()
+        except Exception as e:
+            P.logger.error(f"db_init in request context failed: {e}")
         arg = P.ModelSetting.to_dict()
         
         # 기본 페이지 라우팅
