@@ -30,6 +30,7 @@ setting = {
                 'list': [
                     { 'uri': 'strategies', 'name': '전략선택' },
                     { 'uri': 'compare', 'name': '비교 보기' },
+                    { 'uri': 'scheduler', 'name': '스케줄' },
                     { 'uri': 'scaffold', 'name': '전략 스캐폴딩' },
                     { 'uri': 'manual', 'name': '수동실행' },
                     { 'uri': 'list', 'name': '결과조회' },

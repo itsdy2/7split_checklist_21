@@ -176,52 +176,7 @@
             </div>
         </div>
 
-        <!-- 개별 조건 스케줄링 -->
-        <div class="card mb-3">
-            <div class="card-header">
-                <strong>개별 조건 스케줄링</strong>
-            </div>
-            <div class="card-body">
-                <table class="table table-sm">
-                    <thead>
-                        <tr>
-                            <th>전략</th>
-                            <th>조건</th>
-                            <th>실행 주기 (Cron)</th>
-                            <th>활성화</th>
-                            <th>액션</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for strategy in arg.strategies %}
-                            {% for condition_num, condition_name in strategy.conditions.items() %}
-                            <tr>
-                                <td>{{ strategy.name }}</td>
-                                <td>{{ condition_name }}</td>
-                                <td><input type="text" class="form-control form-control-sm" name="cron_{{ strategy.id }}_{{ condition_num }}" placeholder="* * * * *"></td>
-                                <td>
-                                    <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" name="enabled_{{ strategy.id }}_{{ condition_num }}" value="True">
-                                    </div>
-                                </td>
-                                <td>
-
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- 저장 버튼 (하단) -->
-        <div class="row">
-            <div class="col-md-12 text-right">
-                <button type="button" class="btn btn-secondary" onclick="location.reload()">취소</button>
-                <button type="submit" class="btn btn-primary"><i class="material-icons">save</i> 저장</button>
-            </div>
-        </div>
+        
     </form>
 </div>
 

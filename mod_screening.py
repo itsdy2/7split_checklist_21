@@ -106,6 +106,20 @@ class ModuleScreening(PluginModuleBase):
                 arg['default_strategy'] = default_strategy
                 return render_template(template_name, arg=arg)
             
+            elif sub == 'scheduler':
+                # 전략 수준 스케줄 관리 (ConditionSchedule.condition_number = 0 사용)
+                from .model import ConditionSchedule
+                strategies = Logic.get_strategies_metadata()
+                # 현 설정 읽기
+                current = {s['id']: {'enabled': False, 'cron': ''} for s in strategies}
+                rows = db.session.query(ConditionSchedule).filter(ConditionSchedule.condition_number == 0).all()
+                for r in rows:
+                    if r.strategy_id in current:
+                        current[r.strategy_id] = {'enabled': r.is_enabled, 'cron': r.cron_expression}
+                arg['strategies'] = strategies
+                arg['current_schedule'] = current
+                return render_template(template_name, arg=arg)
+            
             elif sub == 'history':
                 page = req.args.get('page', 1, type=int)
                 pagination = db.session.query(ScreeningHistory).order_by(ScreeningHistory.execution_date.desc()).paginate(page=page, per_page=20, error_out=False)
@@ -216,6 +230,31 @@ class ModuleScreening(PluginModuleBase):
                     writer.writerow([r.code, r.name, r.market, r.market_cap // 100000000 if r.market_cap else 0, r.per, r.pbr, r.roe_avg_3y, r.fscore, r.div_yield, r.screening_date])
                 output.seek(0)
                 return Response(output.getvalue(), mimetype='text/csv', headers={'Content-Disposition': f'attachment; filename=7split_screening_{date_filter or "all"}.csv'})
+            elif sub == 'schedule_save':
+                # 전략 스케줄 저장
+                from .model import ConditionSchedule
+                data = req.form if req.form else req.json
+                strategies = [s['id'] for s in Logic.get_strategies_metadata()]
+                # 기존 전략 스케줄 삭제(조건번호 0)
+                db.session.query(ConditionSchedule).filter(ConditionSchedule.condition_number == 0).delete()
+                saved = 0
+                for sid in strategies:
+                    cron = (data.get(f'cron_{sid}') or '').strip()
+                    enabled_raw = data.get(f'enabled_{sid}')
+                    enabled = str(enabled_raw).lower() in ['true', 'on', '1']
+                    if cron:
+                        row = ConditionSchedule(strategy_id=sid, condition_number=0, cron_expression=cron, is_enabled=enabled)
+                        db.session.add(row)
+                        saved += 1
+                db.session.commit()
+                # 스케줄러 재시작
+                try:
+                    Logic.scheduler_stop()
+                    Logic.scheduler_start()
+                except Exception as e:
+                    P.logger.warning(f"schedule_save: scheduler restart skipped: {e}")
+                P.logger.info(f"schedule_save: saved {saved} strategy schedules")
+                return jsonify({'ret': 'success', 'msg': '전략 스케줄이 저장되었습니다.'})
             elif sub == 'scaffold_create':
                 data = req.form if req.form else req.json
                 strategy_id = (data.get('strategy_id') or '').strip()

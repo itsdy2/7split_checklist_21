@@ -528,7 +528,7 @@ class Logic:
     def scheduler_start():
         """스케줄러 시작"""
         from framework.job import Job
-        from model import ConditionSchedule
+        from .model import ConditionSchedule
         try:
             from framework.job import Job
             
@@ -550,18 +550,31 @@ class Logic:
                 )
                 logger.info(f"Scheduler started: {screening_time} with strategy {default_strategy}")
 
-            # 개별 조건 스케줄
+            # 전략/개별 조건 스케줄
             schedules = db.session.query(ConditionSchedule).filter_by(is_enabled=True).all()
             for schedule in schedules:
-                job_id = f'{package_name}_condition_{schedule.strategy_id}_{schedule.condition_number}'
-                Job.scheduler.add_job(
-                    id=job_id,
-                    func=Logic.run_single_condition,
-                    kwargs={'strategy_id': schedule.strategy_id, 'condition_number': schedule.condition_number},
-                    trigger='cron',
-                    **cron_to_dict(schedule.cron_expression)
-                )
-                logger.info(f'Scheduled condition {job_id} with cron: {schedule.cron_expression}')
+                if schedule.condition_number == 0:
+                    # 전략 전체 스크리닝 스케줄
+                    job_id = f'{package_name}_strategy_{schedule.strategy_id}'
+                    Job.scheduler.add_job(
+                        id=job_id,
+                        func=Logic.start_screening,
+                        kwargs={'strategy_id': schedule.strategy_id, 'execution_type': 'auto'},
+                        trigger='cron',
+                        **cron_to_dict(schedule.cron_expression)
+                    )
+                    logger.info(f'Scheduled strategy {job_id} with cron: {schedule.cron_expression}')
+                else:
+                    # 개별 조건 스케줄
+                    job_id = f'{package_name}_condition_{schedule.strategy_id}_{schedule.condition_number}'
+                    Job.scheduler.add_job(
+                        id=job_id,
+                        func=Logic.run_single_condition,
+                        kwargs={'strategy_id': schedule.strategy_id, 'condition_number': schedule.condition_number},
+                        trigger='cron',
+                        **cron_to_dict(schedule.cron_expression)
+                    )
+                    logger.info(f'Scheduled condition {job_id} with cron: {schedule.cron_expression}')
 
         except Exception as e:
             logger.error(f"Scheduler start error: {str(e)}")
