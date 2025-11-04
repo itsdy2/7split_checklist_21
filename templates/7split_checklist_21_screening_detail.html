@@ -2,22 +2,22 @@
 {% block content %}
 
 <div class="container-fluid">
-    {% if error %}
+    {% if arg.error %}
     <div class="alert alert-danger">
-        <strong>오류:</strong> {{ error }}
+        <strong>오류:</strong> {{ arg.error }}
     </div>
-    {% elif result %}
+    {% elif arg.result %}
     <div class="row mb-3">
         <div class="col-md-12">
             <h3>
                 <i class="material-icons">assessment</i> 
-                {{ result.name }} ({{ result.code }})
-                <span class="badge badge-{% if result.market == 'KOSPI' %}primary{% else %}info{% endif %} ml-2">
-                    {{ result.market }}
+                {{ arg.result.name }} ({{ arg.result.code }})
+                <span class="badge badge-{% if arg.result.market == 'KOSPI' %}primary{% else %}info{% endif %} ml-2">
+                    {{ arg.result.market }}
                 </span>
             </h3>
             <p class="text-muted">
-                최근 스크리닝: {{ result.screening_date }} (전략: {{ result.strategy_name }})
+                최근 스크리닝: {{ arg.result.screening_date }} (전략: {{ arg.result.strategy_name }})
             </p>
         </div>
     </div>
@@ -32,15 +32,15 @@
                     <ul class="list-group">
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                             시가총액
-                            <span>{{ (result.market_cap / 100000000)|int|format_number }}억</span>
+                            <span>{{ (arg.result.market_cap / 100000000)|int|format_number }}억</span>
                         </li>
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                             거래대금
-                            <span>{{ (result.trading_value / 100000000)|int|format_number }}억</span>
+                            <span>{{ (arg.result.trading_value / 100000000)|int|format_number }}억</span>
                         </li>
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                             통과 여부
-                            {% if result.passed %}
+                            {% if arg.result.passed %}
                             <span class="badge badge-success">통과</span>
                             {% else %}
                             <span class="badge badge-secondary">미통과</span>
@@ -52,15 +52,15 @@
                     <ul class="list-group">
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                             PER
-                            <span>{{ "%.2f".format(result.per if result.per else 0) }}</span>
+                            <span>{{ "%.2f".format(arg.result.per if arg.result.per else 0) }}</span>
                         </li>
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                             PBR
-                            <span>{{ "%.2f".format(result.pbr if result.pbr else 0) }}</span>
+                            <span>{{ "%.2f".format(arg.result.pbr if arg.result.pbr else 0) }}</span>
                         </li>
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                             배당수익률(%)
-                            <span>{{ "%.2f".format(result.div_yield if result.div_yield else 0) }}</span>
+                            <span>{{ "%.2f".format(arg.result.div_yield if arg.result.div_yield else 0) }}</span>
                         </li>
                     </ul>
                 </div>
@@ -68,15 +68,15 @@
                     <ul class="list-group">
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                             ROE(3년 평균, %)
-                            <span>{{ "%.2f".format(result.roe_avg_3y if result.roe_avg_3y else 0) }}</span>
+                            <span>{{ "%.2f".format(arg.result.roe_avg_3y if arg.result.roe_avg_3y else 0) }}</span>
                         </li>
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                             F-Score
-                            <span>{{ result.fscore if result.fscore else 0 }}</span>
+                            <span>{{ arg.result.fscore if arg.result.fscore else 0 }}</span>
                         </li>
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                             부채비율(%)
-                            <span>{{ "%.2f".format(result.debt_ratio if result.debt_ratio else 0) }}</span>
+                            <span>{{ "%.2f".format(arg.result.debt_ratio if arg.result.debt_ratio else 0) }}</span>
                         </li>
                     </ul>
                 </div>
@@ -103,7 +103,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for item in history %}
+                        {% for item in arg.history %}
                         <tr>
                             <td>{{ item.screening_date }}</td>
                             <td><span class="badge badge-secondary">{{ item.strategy_name }}</span></td>

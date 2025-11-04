@@ -10,7 +10,6 @@ from framework import db
 class ModelSetting(db.Model):
     __tablename__ = '7split_setting'
     __table_args__ = {'mysql_collate': 'utf8_general_ci'}
-    __bind_key__ = '7split_checklist_21'
     
     id = db.Column(db.Integer, primary_key=True)
     key = db.Column(db.String(100), unique=True, nullable=False)
@@ -28,7 +27,6 @@ class ModelSetting(db.Model):
 class StockScreeningResult(db.Model):
     __tablename__ = '7split_screening_result'
     __table_args__ = {'mysql_collate': 'utf8_general_ci'}
-    __bind_key__ = '7split_checklist_21'
     
     id = db.Column(db.Integer, primary_key=True)
     
@@ -93,7 +91,6 @@ class StockScreeningResult(db.Model):
 class ScreeningHistory(db.Model):
     __tablename__ = '7split_screening_history'
     __table_args__ = {'mysql_collate': 'utf8_general_ci'}
-    __bind_key__ = '7split_checklist_21'
     
     id = db.Column(db.Integer, primary_key=True)
     
@@ -128,7 +125,6 @@ class ScreeningHistory(db.Model):
 class FilterDetail(db.Model):
     __tablename__ = '7split_filter_detail'
     __table_args__ = {'mysql_collate': 'utf8_general_ci'}
-    __bind_key__ = '7split_checklist_21'
     
     id = db.Column(db.Integer, primary_key=True)
     
@@ -150,7 +146,6 @@ class FilterDetail(db.Model):
 class ConditionSchedule(db.Model):
     __tablename__ = '7split_condition_schedule'
     __table_args__ = {'mysql_collate': 'utf8_general_ci'}
-    __bind_key__ = '7split_checklist_21'
 
     id = db.Column(db.Integer, primary_key=True)
     strategy_id = db.Column(db.String(50), nullable=False)

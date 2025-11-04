@@ -26,10 +26,10 @@ class ModuleScreening(PluginModuleBase):
             P.logger.info(f"Rendering template: {template_name}")
             
             if sub == 'strategies':
-                strategies_info = Logic.get_strategies_metadata()
-                default_strategy = Logic.get_setting('default_strategy')
-                P.logger.info(f"Loaded {len(strategies_info)} strategies")
-                return render_template(template_name, arg=arg, strategies=strategies_info, default_strategy=default_strategy)
+                arg['strategies'] = Logic.get_strategies_metadata()
+                arg['default_strategy'] = Logic.get_setting('default_strategy')
+                P.logger.info(f"Loaded {len(arg['strategies'])} strategies")
+                return render_template(template_name, arg=arg)
 
             elif sub == 'list':
                 page = req.args.get('page', 1, type=int)
@@ -54,9 +54,15 @@ class ModuleScreening(PluginModuleBase):
                 
                 available_dates = db.session.query(StockScreeningResult.screening_date).distinct().order_by(StockScreeningResult.screening_date.desc()).limit(30).all()
                 dates = [d[0] for d in available_dates]
-                available_strategies = Logic.get_strategies_metadata()
-                
-                return render_template(template_name, arg=arg, results=pagination.items, pagination=pagination, dates=dates, available_strategies=available_strategies, current_date=date_filter, current_market=market_filter, current_strategy=strategy_filter, passed_only=passed_only)
+                arg['results'] = pagination.items
+                arg['pagination'] = pagination
+                arg['dates'] = [d[0] for d in available_dates]
+                arg['available_strategies'] = Logic.get_strategies_metadata()
+                arg['current_date'] = date_filter
+                arg['current_market'] = market_filter
+                arg['current_strategy'] = strategy_filter
+                arg['passed_only'] = passed_only
+                return render_template(template_name, arg=arg)
             
             elif sub == 'detail':
                 code = req.args.get('code')
@@ -77,7 +83,9 @@ class ModuleScreening(PluginModuleBase):
                     return render_template(template_name, arg=arg, error='종목을 찾을 수 없습니다.')
                 
                 history = db.session.query(StockScreeningResult).filter_by(code=code).order_by(StockScreeningResult.screening_date.desc()).limit(30).all()
-                return render_template(template_name, arg=arg, result=result, history=history)
+                arg['result'] = result
+                arg['history'] = history
+                return render_template(template_name, arg=arg)
 
             elif sub == 'manual':
                 default_strategy = Logic.get_setting('default_strategy')
@@ -87,13 +95,15 @@ class ModuleScreening(PluginModuleBase):
             elif sub == 'history':
                 page = req.args.get('page', 1, type=int)
                 pagination = db.session.query(ScreeningHistory).order_by(ScreeningHistory.execution_date.desc()).paginate(page=page, per_page=20, error_out=False)
-                return render_template(template_name, arg=arg, histories=pagination.items, pagination=pagination)
+                arg['histories'] = pagination.items
+                arg['pagination'] = pagination
+                return render_template(template_name, arg=arg)
 
             elif sub == 'statistics':
                 thirty_days_ago = datetime.now() - timedelta(days=30)
-                daily_stats = db.session.query(StockScreeningResult.screening_date, func.count(StockScreeningResult.id).label('total'), func.sum(func.cast(StockScreeningResult.passed, db.Integer)).label('passed')).filter(StockScreeningResult.screening_date >= thirty_days_ago.date()).group_by(StockScreeningResult.screening_date).order_by(StockScreeningResult.screening_date.desc()).all()
-                market_stats = db.session.query(StockScreeningResult.market, func.count(StockScreeningResult.id).label('total'), func.sum(func.cast(StockScreeningResult.passed, db.Integer)).label('passed')).filter(StockScreeningResult.passed == True).group_by(StockScreeningResult.market).all()
-                return render_template(template_name, arg=arg, daily_stats=daily_stats, market_stats=market_stats)
+                arg['daily_stats'] = db.session.query(StockScreeningResult.screening_date, func.count(StockScreeningResult.id).label('total'), func.sum(func.cast(StockScreeningResult.passed, db.Integer)).label('passed')).filter(StockScreeningResult.screening_date >= thirty_days_ago.date()).group_by(StockScreeningResult.screening_date).order_by(StockScreeningResult.screening_date.desc()).all()
+                arg['market_stats'] = db.session.query(StockScreeningResult.market, func.count(StockScreeningResult.id).label('total'), func.sum(func.cast(StockScreeningResult.passed, db.Integer)).label('passed')).filter(StockScreeningResult.passed == True).group_by(StockScreeningResult.market).all()
+                return render_template(template_name, arg=arg)
             
             else:
                 P.logger.warning(f"Unknown sub menu: {sub}")

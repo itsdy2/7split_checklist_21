@@ -11,9 +11,9 @@
 
     <!-- 전략 카드 목록 -->
     <div class="row">
-        {% for strategy in strategies %}
+        {% for strategy in arg.strategies %}
         <div class="col-md-6 col-lg-4 mb-4">
-            <div class="card strategy-card h-100 {% if strategy.id == default_strategy %}border-primary{% endif %}">
+            <div class="card strategy-card h-100 {% if strategy.id == arg.default_strategy %}border-primary{% endif %}">
                 <div class="card-header 
                     {% if strategy.category == 'quality' %}bg-primary text-white
                     {% elif strategy.category == 'dividend' %}bg-success text-white
@@ -21,7 +21,7 @@
                     {% else %}bg-secondary text-white{% endif %}">
                     <h5 class="mb-0">
                         {{ strategy.name }}
-                        {% if strategy.id == default_strategy %}
+                        {% if strategy.id == arg.default_strategy %}
                         <span class="badge badge-light float-right">기본</span>
                         {% endif %}
                     </h5>
@@ -162,18 +162,17 @@ function runStrategy(strategyId) {
     }
     
     $.ajax({
-        url: '/7split_checklist_21/api/screening/start',
+        url: '/7split_checklist_21/api/screening/start/' + strategyId,
         type: 'POST',
-        data: { strategy: strategyId },
         success: function(response) {
-            if (response.success) {
-                notify('스크리닝이 시작되었습니다.', 'success');
+            if (response.ret === 'success') {
+                notify(response.msg, 'success');
                 // 수동 실행 페이지로 이동
                 setTimeout(function() {
                     location.href = '/7split_checklist_21/screening/manual';
                 }, 1000);
             } else {
-                notify('시작 실패: ' + response.message, 'error');
+                notify('시작 실패: ' + response.msg, 'error');
             }
         },
         error: function() {
@@ -185,15 +184,14 @@ function runStrategy(strategyId) {
 // 기본 전략으로 설정
 function setDefaultStrategy(strategyId) {
     $.ajax({
-        url: '/7split_checklist_21/api/screening/set_default_strategy',
+        url: '/7split_checklist_21/api/screening/set_default_strategy/' + strategyId,
         type: 'POST',
-        data: { strategy: strategyId },
         success: function(response) {
-            if (response.success) {
-                notify('기본 전략이 설정되었습니다.', 'success');
+            if (response.ret === 'success') {
+                notify(response.msg, 'success');
                 location.reload();
             } else {
-                notify('설정 실패: ' + response.message, 'error');
+                notify('설정 실패: ' + response.msg, 'error');
             }
         },
         error: function() {
@@ -212,7 +210,7 @@ function loadRecentHistory() {
         url: '/7split_checklist_21/api/screening/recent_history',
         type: 'GET',
         success: function(response) {
-            if (response.success && response.data.length > 0) {
+            if (response.ret === 'success' && response.data.length > 0) {
                 var html = '';
                 response.data.forEach(function(item) {
                     var statusBadge = item.status === 'completed' 

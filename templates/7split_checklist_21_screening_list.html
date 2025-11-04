@@ -24,8 +24,8 @@
                     <label for="strategy_filter" class="mr-2">전략:</label>
                     <select class="form-control" id="strategy_filter" name="strategy">
                         <option value="">전체</option>
-                        {% for strategy in available_strategies %}
-                        <option value="{{ strategy.id }}" {% if current_strategy == strategy.id %}selected{% endif %}>
+                        {% for strategy in arg.available_strategies %}
+                        <option value="{{ strategy.id }}" {% if arg.current_strategy == strategy.id %}selected{% endif %}>
                             {{ strategy.name }}
                         </option>
                         {% endfor %}
@@ -36,8 +36,8 @@
                     <label for="date_filter" class="mr-2">날짜:</label>
                     <select class="form-control" id="date_filter" name="date">
                         <option value="">전체</option>
-                        {% for date in dates %}
-                        <option value="{{ date }}" {% if current_date == date|string %}selected{% endif %}>
+                        {% for date in arg.dates %}
+                        <option value="{{ date }}" {% if arg.current_date == date|string %}selected{% endif %}>
                             {{ date }}
                         </option>
                         {% endfor %}
@@ -48,8 +48,8 @@
                     <label for="market_filter" class="mr-2">시장:</label>
                     <select class="form-control" id="market_filter" name="market">
                         <option value="">전체</option>
-                        <option value="KOSPI" {% if current_market == 'KOSPI' %}selected{% endif %}>KOSPI</option>
-                        <option value="KOSDAQ" {% if current_market == 'KOSDAQ' %}selected{% endif %}>KOSDAQ</option>
+                        <option value="KOSPI" {% if arg.current_market == 'KOSPI' %}selected{% endif %}>KOSPI</option>
+                        <option value="KOSDAQ" {% if arg.current_market == 'KOSDAQ' %}selected{% endif %}>KOSDAQ</option>
                     </select>
                 </div>
 
@@ -61,7 +61,7 @@
                             id="passed_only" 
                             name="passed_only" 
                             value="true"
-                            {% if passed_only %}checked{% endif %}
+                            {% if arg.passed_only %}checked{% endif %}
                         >
                         <label class="form-check-label" for="passed_only">
                             통과 종목만 보기
@@ -89,9 +89,9 @@
     </div>
 
     <!-- 결과 테이블 -->
-    {% if error %}
+    {% if arg.error %}
     <div class="alert alert-danger">
-        <strong>오류:</strong> {{ error }}
+        <strong>오류:</strong> {{ arg.error }}
     </div>
     {% else %}
     <div class="table-responsive">
@@ -112,7 +112,7 @@
                 </tr>
             </thead>
             <tbody>
-                {% if results|length == 0 %}
+                {% if arg.results|length == 0 %}
                 <tr>
                     <td colspan="11" class="text-center text-muted">
                         검색 결과가 없습니다.
@@ -120,7 +120,7 @@
                 </tr>
                 {% endif %}
 
-                {% for stock in results %}
+                {% for stock in arg.results %}
                 <tr onclick="location.href='/7split_checklist_21/screening/detail/{{ stock.code }}'" style="cursor:pointer;">
                     <td><strong>{{ stock.code }}</strong></td>
                     <td>{{ stock.name }}</td>
@@ -150,16 +150,16 @@
     </div>
 
     <!-- 페이지네이션 -->
-    {% if pagination.pages > 1 %}
+    {% if arg.pagination.pages > 1 %}
     <nav>
         <ul class="pagination justify-content-center">
-            <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
-                <a class="page-link" href="?page={{ pagination.prev_num }}">이전</a>
+            <li class="page-item {% if not arg.pagination.has_prev %}disabled{% endif %}">
+                <a class="page-link" href="?page={{ arg.pagination.prev_num }}">이전</a>
             </li>
 
-            {% for page_num in pagination.iter_pages() %}
+            {% for page_num in arg.pagination.iter_pages() %}
                 {% if page_num %}
-                <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+                <li class="page-item {% if page_num == arg.pagination.page %}active{% endif %}">
                     <a class="page-link" href="?page={{ page_num }}">{{ page_num }}</a>
                 </li>
                 {% else %}
@@ -167,8 +167,8 @@
                 {% endif %}
             {% endfor %}
 
-            <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
-                <a class="page-link" href="?page={{ pagination.next_num }}">다음</a>
+            <li class="page-item {% if not arg.pagination.has_next %}disabled{% endif %}">
+                <a class="page-link" href="?page={{ arg.pagination.next_num }}">다음</a>
             </li>
         </ul>
     </nav>

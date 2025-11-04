@@ -43,7 +43,7 @@ class ModuleBase(PluginModuleBase):
                 template_name = f'{P.package_name}_{self.name}_{sub}.html'
                 P.logger.info(f"Rendering template: {template_name}")
                 
-                return render_template(template_name, arg=arg, settings=settings, strategies=strategies)
+                return render_template(template_name, arg=arg)
                 
             except Exception as e:
                 P.logger.error(f"Error in setting menu: {str(e)}")
@@ -61,11 +61,10 @@ class ModuleBase(PluginModuleBase):
         P.logger.warning(f"Unknown sub menu: {sub}")
         return f"<div class='container'><h3>알 수 없는 메뉴: {sub}</h3></div>"
 
-    def process_command(self, command, arg1, arg2, arg3, req):
-        P.logger.info(f"ModuleBase.process_command: command={command}")
-        
+    def process_api(self, sub, req):
+        P.logger.info(f"ModuleBase.process_api: sub={sub}")
         try:
-            if command == 'setting_save':
+            if sub == 'setting_save':
                 form_data = req.form.to_dict()
                 
                 # 설정 저장
@@ -100,11 +99,11 @@ class ModuleBase(PluginModuleBase):
                 return jsonify({'ret': 'success', 'msg': '설정이 저장되었습니다.'})
                 
         except Exception as e:
-            P.logger.error(f"Command error: {str(e)}")
+            P.logger.error(f"API error: {str(e)}")
             P.logger.error(traceback.format_exc())
             return jsonify({'ret': 'error', 'msg': str(e)})
         
-        return jsonify({'ret': 'error', 'msg': 'Unknown command'})
+        return jsonify({'ret': 'error', 'msg': 'Unknown sub-command'})
 
     def scheduler_function(self):
         Logic.scheduler_start()

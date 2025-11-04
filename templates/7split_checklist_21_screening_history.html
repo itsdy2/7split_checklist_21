@@ -8,9 +8,9 @@
         </div>
     </div>
 
-    {% if error %}
+    {% if arg.error %}
     <div class="alert alert-danger">
-        <strong>오류:</strong> {{ error }}
+        <strong>오류:</strong> {{ arg.error }}
     </div>
     {% else %}
     <div class="table-responsive">
@@ -28,7 +28,7 @@
                 </tr>
             </thead>
             <tbody>
-                {% if histories|length == 0 %}
+                {% if arg.histories|length == 0 %}
                 <tr>
                     <td colspan="8" class="text-center text-muted">
                         실행 이력이 없습니다.
@@ -36,7 +36,7 @@
                 </tr>
                 {% endif %}
 
-                {% for history in histories %}
+                {% for history in arg.histories %}
                 <tr>
                     <td>{{ history.execution_date.strftime('%Y-%m-%d %H:%M:%S') }}</td>
                     <td>
@@ -68,16 +68,16 @@
         </table>
     </div>
 
-    {% if pagination and pagination.pages > 1 %}
+    {% if arg.pagination and arg.pagination.pages > 1 %}
     <nav>
         <ul class="pagination justify-content-center">
-            <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
-                <a class="page-link" href="?page={{ pagination.prev_num }}">이전</a>
+            <li class="page-item {% if not arg.pagination.has_prev %}disabled{% endif %}">
+                <a class="page-link" href="?page={{ arg.pagination.prev_num }}">이전</a>
             </li>
 
-            {% for page_num in pagination.iter_pages() %}
+            {% for page_num in arg.pagination.iter_pages() %}
                 {% if page_num %}
-                <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+                <li class="page-item {% if page_num == arg.pagination.page %}active{% endif %}">
                     <a class="page-link" href="?page={{ page_num }}">{{ page_num }}</a>
                 </li>
                 {% else %}
@@ -85,8 +85,8 @@
                 {% endif %}
             {% endfor %}
 
-            <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
-                <a class="page-link" href="?page={{ pagination.next_num }}">다음</a>
+            <li class="page-item {% if not arg.pagination.has_next %}disabled{% endif %}">
+                <a class="page-link" href="?page={{ arg.pagination.next_num }}">다음</a>
             </li>
         </ul>
     </nav>
