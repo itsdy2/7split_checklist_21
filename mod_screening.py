@@ -17,11 +17,45 @@ class ModuleScreening(PluginModuleBase):
         P.logger.info(f"ModuleScreening.process_menu called: sub={sub}")
         arg = P.ModelSetting.to_dict()
         
+        # setup.py 수정으로 인해 'screening' 메뉴 클릭 시 sub가 None으로 들어옵니다.
+        # 이 경우 'strategies' (first_menu)로 리디렉션합니다.
         if not sub:
             sub = 'strategies'
             P.logger.info(f"sub is empty, redirecting to: {sub}")
         
         try:
+            # V V V 수정: 'detail' 페이지 로직 변경 V V V
+            # 'detail'은 템플릿 이름에 포함되면 안 되므로 분기 처리
+            if sub.startswith('detail'):
+                template_name = f'{P.package_name}_{self.name}_detail.html'
+                P.logger.info(f"Rendering template: {template_name}")
+                
+                # .../detail?code=005930 방식 (쿼리 파라미터)
+                code = req.args.get('code')
+                
+                # .../detail/005930 방식 (기존 경로 파라미터) - 하위 호환성
+                if not code:
+                    path_parts = req.path.split('/')
+                    try:
+                        detail_index = path_parts.index('detail')
+                        if detail_index + 1 < len(path_parts):
+                            code = path_parts[detail_index + 1]
+                    except (ValueError, IndexError):
+                        pass
+
+                if not code:
+                    return render_template(template_name, arg=arg, error='종목 코드가 필요합니다.')
+
+                result = db.session.query(StockScreeningResult).filter_by(code=code).order_by(StockScreeningResult.screening_date.desc()).first()
+                if not result:
+                    return render_template(template_name, arg=arg, error='종목을 찾을 수 없습니다.')
+                
+                history = db.session.query(StockScreeningResult).filter_by(code=code).order_by(StockScreeningResult.screening_date.desc()).limit(30).all()
+                arg['result'] = result
+                arg['history'] = history
+                return render_template(template_name, arg=arg)
+            # ^ ^ ^ 수정: 'detail' 페이지 로직 변경 ^ ^ ^
+
             template_name = f'{P.package_name}_{self.name}_{sub}.html'
             P.logger.info(f"Rendering template: {template_name}")
             
@@ -64,29 +98,6 @@ class ModuleScreening(PluginModuleBase):
                 arg['passed_only'] = passed_only
                 return render_template(template_name, arg=arg)
             
-            elif sub == 'detail':
-                code = req.args.get('code')
-                if not code:
-                    path_parts = req.path.split('/')
-                    try:
-                        detail_index = path_parts.index('detail')
-                        if detail_index + 1 < len(path_parts):
-                            code = path_parts[detail_index + 1]
-                    except (ValueError, IndexError):
-                        pass
-
-                if not code:
-                    return render_template(template_name, arg=arg, error='종목 코드가 필요합니다.')
-
-                result = db.session.query(StockScreeningResult).filter_by(code=code).order_by(StockScreeningResult.screening_date.desc()).first()
-                if not result:
-                    return render_template(template_name, arg=arg, error='종목을 찾을 수 없습니다.')
-                
-                history = db.session.query(StockScreeningResult).filter_by(code=code).order_by(StockScreeningResult.screening_date.desc()).limit(30).all()
-                arg['result'] = result
-                arg['history'] = history
-                return render_template(template_name, arg=arg)
-
             elif sub == 'manual':
                 default_strategy = Logic.get_setting('default_strategy')
                 arg['default_strategy'] = default_strategy
@@ -113,7 +124,8 @@ class ModuleScreening(PluginModuleBase):
             P.logger.error(f"Error in process_menu '{sub}': {str(e)}")
             P.logger.error(traceback.format_exc())
             return f"<div class='container'><div class='alert alert-danger'><h3>오류 발생</h3><p><strong>메뉴:</strong> {sub}</p><p><strong>에러:</strong> {str(e)}</p><pre>{traceback.format_exc()}</pre></div></div>"
-
+    
+    # (process_command, process_api는 변경 없음)
     def process_command(self, command, arg1, arg2, arg3, req):
         P.logger.info(f"ModuleScreening.process_command: {command}, arg1={arg1}")
         try:
