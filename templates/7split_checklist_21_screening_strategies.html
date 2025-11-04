@@ -144,7 +144,7 @@
 
 .strategy-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    box_shadow: 0 4px 8px rgba(0,0,0,0.2);
 }
 
 .strategy-info {
@@ -162,14 +162,18 @@ function runStrategy(strategyId) {
     }
     
     $.ajax({
-        url: '/7split_checklist_21/api/screening/start/' + strategyId,
+        // V V V 수정: API 경로 수정 V V V
+        url: '/7split_checklist_21/api/screening/start?arg1=' + strategyId,
+        // ^ ^ ^ 수정: API 경로 수정 ^ ^ ^
         type: 'POST',
         success: function(response) {
             if (response.ret === 'success') {
                 notify(response.msg, 'success');
                 // 수동 실행 페이지로 이동
                 setTimeout(function() {
+                    // V V V 수정: 페이지 링크 수정 V V V
                     location.href = '/7split_checklist_21/screening/manual';
+                    // ^ ^ ^ 수정: 페이지 링크 수정 ^ ^ ^
                 }, 1000);
             } else {
                 notify('시작 실패: ' + response.msg, 'error');
@@ -184,7 +188,9 @@ function runStrategy(strategyId) {
 // 기본 전략으로 설정
 function setDefaultStrategy(strategyId) {
     $.ajax({
-        url: '/7split_checklist_21/api/screening/set_default_strategy/' + strategyId,
+        // V V V 수정: API 경로 수정 V V V
+        url: '/7split_checklist_21/api/screening/set_default_strategy?arg1=' + strategyId,
+        // ^ ^ ^ 수정: API 경로 수정 ^ ^ ^
         type: 'POST',
         success: function(response) {
             if (response.ret === 'success') {
@@ -207,7 +213,9 @@ $(document).ready(function() {
 
 function loadRecentHistory() {
     $.ajax({
+        // V V V 수정: API 경로 수정 V V V
         url: '/7split_checklist_21/api/screening/recent_history',
+        // ^ ^ ^ 수정: API 경로 수정 ^ ^ ^
         type: 'GET',
         success: function(response) {
             if (response.ret === 'success' && response.data.length > 0) {
@@ -221,7 +229,7 @@ function loadRecentHistory() {
                         '<td>' + item.execution_date + '</td>' +
                         '<td>' + item.strategy_name + '</td>' +
                         '<td>' + item.passed_stocks + ' / ' + item.total_stocks + '</td>' +
-                        '<td>' + item.execution_time.toFixed(1) + '초</td>' +
+                        '<td>' + (item.execution_time ? item.execution_time.toFixed(1) : 0) + '초</td>' +
                         '<td>' + statusBadge + '</td>' +
                         '</tr>';
                 });
