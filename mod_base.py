@@ -5,8 +5,8 @@ from .logic import Logic
 
 class ModuleBase(PluginModuleBase):
     def __init__(self, P):
-        # 'first_menu' 제거. 'home_module'이 설정되면 'sub'가 None으로 들어옵니다.
-        super(ModuleBase, self).__init__(P, name='base')
+        # 기본 진입 서브를 명확히 지정하여 라우터가 템플릿으로 진입하도록 함
+        super(ModuleBase, self).__init__(P, name='base', first_menu='setting')
         self.db_default = Logic.db_default
         Logic.db_init()
         P.logger.info("ModuleBase initialized")
