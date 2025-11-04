@@ -132,7 +132,7 @@
                             {{ stock.market }}
                         </span>
                     </td>
-                    <td>{{ (stock.market_cap / 100000000)|int|format_number }}억</td>
+                    <td>{{ '{:,}'.format(((stock.market_cap or 0) // 100000000)) }}억</td>
                     <td>{{ "%.2f"|format(stock.per if stock.per else 0) }}</td>
                     <td>{{ "%.2f"|format(stock.pbr if stock.pbr else 0) }}</td>
                     <td>{{ "%.2f"|format(stock.roe_avg_3y if stock.roe_avg_3y else 0) }}</td>

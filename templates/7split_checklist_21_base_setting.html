@@ -2,10 +2,11 @@
 {% block content %}
 
 <div class="container-fluid">
-    <div class="row">
-        <div class="col-md-12">
-            <h3><i class="material-icons">settings</i> 세븐스플릿 스크리닝 설정</h3>
-            <hr>
+    <div class="d-flex justify-content-between align-items-center mb-2" style="position: sticky; top: 0; background: var(--body-bg, #fff); z-index: 2; padding-top: 10px;">
+        <h3 class="mb-0"><i class="material-icons">settings</i> 세븐스플릿 스크리닝 설정</h3>
+        <div>
+            <button type="button" class="btn btn-secondary mr-2" onclick="location.reload()">취소</button>
+            <button type="button" id="save_top_btn" class="btn btn-primary"><i class="material-icons">save</i> 저장</button>
         </div>
     </div>
 
@@ -214,15 +215,11 @@
             </div>
         </div>
 
-        <!-- 저장 버튼 -->
+        <!-- 저장 버튼 (하단) -->
         <div class="row">
             <div class="col-md-12 text-right">
-                <button type="button" class="btn btn-secondary" onclick="location.reload()">
-                    취소
-                </button>
-                <button type="submit" class="btn btn-primary">
-                    <i class="material-icons">save</i> 저장
-                </button>
+                <button type="button" class="btn btn-secondary" onclick="location.reload()">취소</button>
+                <button type="submit" class="btn btn-primary"><i class="material-icons">save</i> 저장</button>
             </div>
         </div>
     </form>
@@ -230,6 +227,7 @@
 
 <script>
 $(document).ready(function() {
+    $('#save_top_btn').on('click', function(){ $('#setting_form').trigger('submit'); });
     $('#setting_form').on('submit', function(e) {
         e.preventDefault();
         
@@ -247,6 +245,7 @@ $(document).ready(function() {
             success: function(response) {
                 if (response.ret === 'success') {
                     notify(response.msg, 'success');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
                 } else {
                     notify('저장 실패: ' + response.msg, 'error');
                 }

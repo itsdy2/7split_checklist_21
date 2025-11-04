@@ -11,6 +11,9 @@
 
     <!-- 전략 카드 목록 -->
     <div class="row">
+        <div class="col-12 mb-2 text-right">
+            <button class="btn btn-outline-primary" id="compare_selected_btn"><i class="material-icons">compare</i> 선택 비교</button>
+        </div>
         {% for strategy in arg.strategies %}
         <div class="col-md-6 col-lg-4 mb-4">
             <div class="card strategy-card h-100 {% if strategy.id == arg.default_strategy %}border-primary{% endif %}">
@@ -28,6 +31,10 @@
                 </div>
                 
                 <div class="card-body">
+                    <div class="custom-control custom-checkbox mb-2">
+                        <input type="checkbox" class="custom-control-input strategy-check" id="chk-{{ strategy.id }}" value="{{ strategy.id }}">
+                        <label class="custom-control-label" for="chk-{{ strategy.id }}">비교 선택</label>
+                    </div>
                     <p class="card-text">{{ strategy.description }}</p>
                     
                     <!-- 전략 정보 -->
@@ -155,6 +162,12 @@
 </style>
 
 <script>
+$('#compare_selected_btn').on('click', function(){
+    var selected = [];
+    $('.strategy-check:checked').each(function(){ selected.push($(this).val()); });
+    if (selected.length === 0) { notify('비교할 전략을 선택하세요.', 'warning'); return; }
+    location.href = '/7split_checklist_21/screening/compare?strategies=' + selected.join(',');
+});
 // 전략 실행
 function runStrategy(strategyId) {
     if (!confirm('선택한 전략으로 스크리닝을 시작하시겠습니까?')) {

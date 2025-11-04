@@ -118,6 +118,36 @@ class ModuleScreening(PluginModuleBase):
                 arg['daily_stats'] = db.session.query(StockScreeningResult.screening_date, func.count(StockScreeningResult.id).label('total'), func.sum(func.cast(StockScreeningResult.passed, db.Integer)).label('passed')).filter(StockScreeningResult.screening_date >= thirty_days_ago.date()).group_by(StockScreeningResult.screening_date).order_by(StockScreeningResult.screening_date.desc()).all()
                 arg['market_stats'] = db.session.query(StockScreeningResult.market, func.count(StockScreeningResult.id).label('total'), func.sum(func.cast(StockScreeningResult.passed, db.Integer)).label('passed')).filter(StockScreeningResult.passed == True).group_by(StockScreeningResult.market).all()
                 return render_template(template_name, arg=arg)
+
+            elif sub == 'compare':
+                # 여러 전략/날짜로 결과를 동시에 비교 표시
+                # 쿼리: ?strategies=a,b,c&date=YYYY-MM-DD&passed_only=true
+                strategies_q = req.args.get('strategies', '')
+                selected = [s.strip() for s in strategies_q.split(',') if s.strip()]
+                date_filter = req.args.get('date')
+                passed_only = req.args.get('passed_only', 'true') == 'true'
+
+                if not selected:
+                    # 기본: 등록된 상위 3개 전략
+                    meta = Logic.get_strategies_metadata()
+                    selected = [m['id'] for m in meta[:3]] if meta else []
+
+                # 전략별 결과 수집
+                grouped = {}
+                for sid in selected:
+                    query = db.session.query(StockScreeningResult).filter(StockScreeningResult.strategy_name == sid)
+                    if date_filter:
+                        query = query.filter(StockScreeningResult.screening_date == date_filter)
+                    if passed_only:
+                        query = query.filter(StockScreeningResult.passed == True)
+                    grouped[sid] = query.order_by(StockScreeningResult.screening_date.desc(), StockScreeningResult.market_cap.desc()).limit(200).all()
+
+                arg['selected_strategies'] = selected
+                arg['available_strategies'] = Logic.get_strategies_metadata()
+                arg['grouped_results'] = grouped
+                arg['current_date'] = date_filter
+                arg['passed_only'] = passed_only
+                return render_template(template_name, arg=arg)
             
             elif sub == 'scaffold':
                 return render_template(template_name, arg=arg)

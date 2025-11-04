@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container-fluid">
+  <div class="row mb-3">
+    <div class="col-md-8">
+      <h3><i class="material-icons">compare</i> 전략 비교 보기</h3>
+    </div>
+  </div>
+
+  <div class="card mb-3">
+    <div class="card-body">
+      <form id="compare_form" class="form-inline">
+        <div class="form-group mr-3">
+          <label class="mr-2">전략 선택</label>
+          <select id="strategy_multi" class="form-control" multiple size="4" style="min-width:240px;">
+            {% for s in arg.available_strategies %}
+            <option value="{{ s.id }}" {% if s.id in arg.selected_strategies %}selected{% endif %}>{{ s.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group mr-3">
+          <label class="mr-2">날짜</label>
+          <input type="date" id="date_filter" class="form-control" value="{{ arg.current_date or '' }}">
+        </div>
+        <div class="form-group mr-3">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="passed_only" {% if arg.passed_only %}checked{% endif %}>
+            <label class="form-check-label" for="passed_only">통과만</label>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary">적용</button>
+      </form>
+    </div>
+  </div>
+
+  <ul class="nav nav-tabs" role="tablist">
+    {% for sid, results in arg.grouped_results.items() %}
+    <li class="nav-item">
+      <a class="nav-link {% if loop.first %}active{% endif %}" data-toggle="tab" href="#tab-{{ sid }}" role="tab">{{ sid }}</a>
+    </li>
+    {% endfor %}
+  </ul>
+  <div class="tab-content">
+    {% for sid, results in arg.grouped_results.items() %}
+    <div class="tab-pane fade {% if loop.first %}show active{% endif %}" id="tab-{{ sid }}" role="tabpanel">
+      <div class="table-responsive mt-3">
+        <table class="table table-hover table-striped">
+          <thead class="thead-dark">
+            <tr>
+              <th>코드</th>
+              <th>종목명</th>
+              <th>시장</th>
+              <th>시총(억)</th>
+              <th>PER</th>
+              <th>PBR</th>
+              <th>ROE</th>
+              <th>배당(%)</th>
+              <th>일자</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if results|length == 0 %}
+            <tr><td colspan="9" class="text-center text-muted">결과 없음</td></tr>
+            {% endif %}
+            {% for r in results %}
+            <tr>
+              <td>{{ r.code }}</td>
+              <td>{{ r.name }}</td>
+              <td>{{ r.market }}</td>
+              <td>{{ '{:,}'.format(((r.market_cap or 0) // 100000000)) }}</td>
+              <td>{{ '%.2f'|format(r.per if r.per else 0) }}</td>
+              <td>{{ '%.2f'|format(r.pbr if r.pbr else 0) }}</td>
+              <td>{{ '%.2f'|format(r.roe_avg_3y if r.roe_avg_3y else 0) }}</td>
+              <td>{{ '%.2f'|format(r.div_yield if r.div_yield else 0) }}</td>
+              <td>{{ r.screening_date }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<script>
+$('#compare_form').on('submit', function(e){
+  e.preventDefault();
+  var selected = [];
+  $('#strategy_multi option:selected').each(function(){ selected.push($(this).val()); });
+  var params = [];
+  if (selected.length) params.push('strategies=' + selected.join(','));
+  var date = $('#date_filter').val();
+  if (date) params.push('date=' + date);
+  if ($('#passed_only').is(':checked')) params.push('passed_only=true');
+  location.href = '/7split_checklist_21/screening/compare' + (params.length ? ('?' + params.join('&')) : '');
+});
+</script>
+
+{% endblock %}
+
+
