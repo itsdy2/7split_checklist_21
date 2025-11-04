@@ -16,50 +16,15 @@ setting = {
         'name': '세븐스플릿',
         # V V V 수정: 메뉴 리스트 구조 변경 V V V
         'list': [
-            {
-                'uri': 'base',
-                'name': '설정',
-                'list': [
-                    { 'uri': 'setting', 'name': '환경설정' },
-                    { 'uri': 'help', 'name': '도움말' }
-                ]
-            },
-            {
-                # 'screening' 모듈을 부모로 하는 드롭다운 메뉴로 변경
-                'uri': 'screening', 
-                'name': '스크리닝',
-                'list': [
-                    {
-                        # 부모 'screening'이 있으므로 'strategies'만 명시
-                        'uri': 'strategies', 
-                        'name': '전략선택'
-                    },
-                    {
-                        'uri': 'scaffold',
-                        'name': '전략 스캐폴딩'
-                    },
-                    {
-                        'uri': 'manual', 
-                        'name': '수동실행'
-                    },
-                    {
-                        'uri': 'list', 
-                        'name': '결과조회'
-                    },
-                    {
-                        'uri': 'history', 
-                        'name': '실행이력'
-                    },
-                    {
-                        'uri': 'statistics', 
-                        'name': '통계'
-                    }
-                ]
-            },
-            {
-                'uri': 'log',
-                'name': '로그'
-            }
+            { 'uri': 'base/setting', 'name': '설정' },
+            { 'uri': 'base/help', 'name': '도움말' },
+            { 'uri': 'screening/strategies', 'name': '전략선택' },
+            { 'uri': 'screening/scaffold', 'name': '전략 스캐폴딩' },
+            { 'uri': 'screening/manual', 'name': '수동실행' },
+            { 'uri': 'screening/list', 'name': '결과조회' },
+            { 'uri': 'screening/history', 'name': '실행이력' },
+            { 'uri': 'screening/statistics', 'name': '통계' },
+            { 'uri': 'log', 'name': '로그' }
         ]
         # ^ ^ ^ 수정: 메뉴 리스트 구조 변경 ^ ^ ^
     },
