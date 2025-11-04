@@ -5,8 +5,8 @@ from .logic import Logic
 
 class ModuleBase(PluginModuleBase):
     def __init__(self, P):
-        # first_menu 제거 - FlaskFarm이 자동으로 첫 번째 sub 메뉴 사용
-        super(ModuleBase, self).__init__(P, name='base', first_menu='setting')
+        # 'first_menu' 제거. 'home_module'이 설정되면 'sub'가 None으로 들어옵니다.
+        super(ModuleBase, self).__init__(P, name='base')
         self.db_default = Logic.db_default
         Logic.db_init()
         P.logger.info("ModuleBase initialized")
@@ -15,51 +15,54 @@ class ModuleBase(PluginModuleBase):
         P.logger.info(f"ModuleBase.process_menu called: sub={sub}")
         arg = P.ModelSetting.to_dict()
         
-        # sub가 None이거나 빈 문자열이면 setting으로 설정
-        if not sub or sub == 'base':
+        # 'base' 모듈은 'setting' 페이지만을 다룹니다.
+        # setup.py에서 'home_module: base'로 설정했기 때문에
+        # /7split_checklist_21/base 로 접속 시 sub가 None이 됩니다.
+        # 이 경우 'setting'으로 처리합니다.
+        if not sub or sub == 'base' or sub == 'setting':
             sub = 'setting'
-            P.logger.info(f"sub redirected to: {sub}")
-        
-        if sub == 'setting':
+        else:
+            P.logger.warning(f"Unknown sub menu in base module: {sub}")
+            return f"<div class='container'><h3>알 수 없는 메뉴: {sub}</h3></div>"
+
+        try:
+            # 설정 값 로드
+            settings = {}
+            for key in self.db_default.keys():
+                settings[key] = Logic.get_setting(key)
+            
+            # 전략 정보 로드
             try:
-                # 설정 값 로드
-                settings = {}
-                for key in self.db_default.keys():
-                    settings[key] = Logic.get_setting(key)
-                
-                # 전략 정보 로드
-                try:
-                    from strategies import get_strategies_info
-                    strategies = get_strategies_info()
-                    P.logger.info(f"Loaded {len(strategies)} strategies")
-                except Exception as e:
-                    P.logger.error(f"Failed to load strategies: {str(e)}")
-                    P.logger.error(traceback.format_exc())
-                    strategies = []
-                
-                arg['settings'] = settings
-                arg['strategies'] = strategies
-                
-                template_name = f'{P.package_name}_{self.name}_{sub}.html'
-                P.logger.info(f"Rendering template: {template_name}")
-                
-                return render_template(template_name, arg=arg)
-                
+                # from strategies import get_strategies_info # 원본에는 strategies 임포트가 없음. 해당 파일은 strategies 폴더 하위에 있음.
+                # logic.py 에 이미 strategies 임포트하는 함수가 있으므로 Logic 클래스를 통해 호출
+                strategies = Logic.get_strategies_metadata()
+                P.logger.info(f"Loaded {len(strategies)} strategies")
             except Exception as e:
-                P.logger.error(f"Error in setting menu: {str(e)}")
+                P.logger.error(f"Failed to load strategies: {str(e)}")
                 P.logger.error(traceback.format_exc())
-                return f"""
-                <div class='container'>
-                    <div class='alert alert-danger'>
-                        <h3>오류 발생</h3>
-                        <p><strong>에러:</strong> {str(e)}</p>
-                        <pre>{traceback.format_exc()}</pre>
-                    </div>
+                strategies = []
+            
+            arg['settings'] = settings
+            arg['strategies'] = strategies
+            
+            # 템플릿 이름: 7split_checklist_21_base_setting.html
+            template_name = f'{P.package_name}_{self.name}_{sub}.html'
+            P.logger.info(f"Rendering template: {template_name}")
+            
+            return render_template(template_name, arg=arg)
+            
+        except Exception as e:
+            P.logger.error(f"Error in setting menu: {str(e)}")
+            P.logger.error(traceback.format_exc())
+            return f"""
+            <div class='container'>
+                <div class='alert alert-danger'>
+                    <h3>오류 발생</h3>
+                    <p><strong>에러:</strong> {str(e)}</p>
+                    <pre>{traceback.format_exc()}</pre>
                 </div>
-                """
-        
-        P.logger.warning(f"Unknown sub menu: {sub}")
-        return f"<div class='container'><h3>알 수 없는 메뉴: {sub}</h3></div>"
+            </div>
+            """
 
     def process_api(self, sub, req):
         P.logger.info(f"ModuleBase.process_api: sub={sub}")
