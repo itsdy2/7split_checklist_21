@@ -7,7 +7,8 @@
             <h3><i class="material-icons">list</i> 스크리닝 결과</h3>
         </div>
         <div class="col-md-6 text-right">
-            <a href="/7split_checklist_21/manual" class="btn btn-success">
+            <!-- '수동 실행' 버튼의 링크를 표준 URI로 변경 -->
+            <a href="/7split_checklist_21/screening/manual" class="btn btn-success">
                 <i class="material-icons">play_arrow</i> 수동 실행
             </a>
             <button class="btn btn-info" onclick="downloadCSV()">
@@ -121,7 +122,9 @@
                 {% endif %}
 
                 {% for stock in arg.results %}
-                <tr onclick="location.href='/7split_checklist_21/screening/detail/{{ stock.code }}'" style="cursor:pointer;">
+                <!-- V V V 수정: onclick 링크를 쿼리 파라미터 방식으로 변경 V V V -->
+                <tr onclick="location.href='/7split_checklist_21/screening/detail?code={{ stock.code }}'" style="cursor:pointer;">
+                <!-- ^ ^ ^ 수정: onclick 링크를 쿼리 파라미터 방식으로 변경 ^ ^ ^ -->
                     <td><strong>{{ stock.code }}</strong></td>
                     <td>{{ stock.name }}</td>
                     <td>
@@ -187,6 +190,7 @@ $('#filter_form').on('submit', function(e) {
     if ($('#market_filter').val()) params.push('market=' + $('#market_filter').val());
     if ($('#passed_only').is(':checked')) params.push('passed_only=true');
     
+    // 링크를 표준 URI로 변경
     location.href = '/7split_checklist_21/screening/list?' + params.join('&');
 });
 
