@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from .setup import *
+from plugin import *
 from .logic import Logic
 from .model import StockScreeningResult, ScreeningHistory
 from datetime import datetime, timedelta
@@ -32,12 +32,12 @@ class ModuleScreening(PluginModuleBase):
                 return render_template(template_name, arg=arg, strategies=strategies_info, default_strategy=default_strategy)
 
             elif sub == 'list':
-                page = request.args.get('page', 1, type=int)
-                per_page = request.args.get('per_page', 50, type=int)
-                date_filter = request.args.get('date')
-                market_filter = request.args.get('market')
-                strategy_filter = request.args.get('strategy')
-                passed_only = request.args.get('passed_only', 'true') == 'true'
+                page = req.args.get('page', 1, type=int)
+                per_page = req.args.get('per_page', 50, type=int)
+                date_filter = req.args.get('date')
+                market_filter = req.args.get('market')
+                strategy_filter = req.args.get('strategy')
+                passed_only = req.args.get('passed_only', 'true') == 'true'
                 
                 query = db.session.query(StockScreeningResult)
                 if date_filter: 
@@ -59,9 +59,9 @@ class ModuleScreening(PluginModuleBase):
                 return render_template(template_name, arg=arg, results=pagination.items, pagination=pagination, dates=dates, available_strategies=available_strategies, current_date=date_filter, current_market=market_filter, current_strategy=strategy_filter, passed_only=passed_only)
             
             elif sub == 'detail':
-                code = request.args.get('code')
+                code = req.args.get('code')
                 if not code:
-                    path_parts = request.path.split('/')
+                    path_parts = req.path.split('/')
                     try:
                         detail_index = path_parts.index('detail')
                         if detail_index + 1 < len(path_parts):
@@ -85,7 +85,7 @@ class ModuleScreening(PluginModuleBase):
                 return render_template(template_name, arg=arg)
             
             elif sub == 'history':
-                page = request.args.get('page', 1, type=int)
+                page = req.args.get('page', 1, type=int)
                 pagination = db.session.query(ScreeningHistory).order_by(ScreeningHistory.execution_date.desc()).paginate(page=page, per_page=20, error_out=False)
                 return render_template(template_name, arg=arg, histories=pagination.items, pagination=pagination)
 
@@ -146,7 +146,7 @@ class ModuleScreening(PluginModuleBase):
         P.logger.info(f"ModuleScreening.process_api: sub={sub}")
         try:
             if sub == 'download_csv':
-                date_filter = request.args.get('date')
+                date_filter = req.args.get('date')
                 query = db.session.query(StockScreeningResult).filter(StockScreeningResult.passed == True)
                 if date_filter:
                     query = query.filter(StockScreeningResult.screening_date == date_filter)

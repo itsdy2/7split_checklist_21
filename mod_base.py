@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from .setup import * 
+import traceback
+from plugin import *
 from .logic import Logic
 
 class ModuleBase(PluginModuleBase):
