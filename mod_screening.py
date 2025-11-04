@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from plugin import *
+from .setup import *
 from framework import db
 from .logic import Logic
 from .model import StockScreeningResult, ScreeningHistory
