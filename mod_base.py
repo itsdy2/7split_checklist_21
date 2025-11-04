@@ -80,75 +80,23 @@ class ModuleBase(PluginModuleBase):
         P.logger.info(f"ModuleBase.process_api: sub={sub}")
         try:
             if sub == 'setting_save':
-                # 폼/JSON 모두 수용
-                form_data = {}
-                try:
-                    if hasattr(req, 'form') and req.form:
-                        form_data = req.form.to_dict(flat=True)
-                    elif req.is_json:
-                        form_data = req.get_json(silent=True) or {}
-                except Exception as e:
-                    P.logger.warning(f"Failed to parse request data: {e}")
-                    form_data = req.values.to_dict(flat=True)
-
-                # 수신 데이터 로그 (민감정보 마스킹)
-                def _mask(k, v):
-                    if k is None:
-                        return v
-                    kl = str(k).lower()
-                    if any(s in kl for s in ['key', 'token', 'secret', 'webhook', 'password']):
-                        return '******'
-                    return v
-                safe_preview = {k: _mask(k, v) for k, v in form_data.items()}
-                P.logger.info(f"setting_save received: keys={list(safe_preview.keys())}")
+                form_data = req.form.to_dict()
+                P.logger.debug(f"Received form data: {form_data}")
                 
-                # 설정 저장
-                for key in form_data:
-                    # if not (key.startswith('cron_') or key.startswith('enabled_')):
-                        Logic.set_setting(key, form_data[key])
-                        P.logger.debug(f"setting_save update: {key}={_mask(key, form_data[key])}")
+                for key, value in form_data.items():
+                    Logic.set_setting(key, value)
                 
-                # # 개별 조건 스케줄 저장
-                # schedules = []
-                # for key, value in form_data.items():
-                #     if key.startswith('cron_'):
-                #         parts = key.split('_')
-                #         if len(parts) >= 3:
-                #             strategy_id = parts[1]
-                #             condition_number = int(parts[2])
-                #             cron_expression = value
-                #             enabled_val = form_data.get(f'enabled_{strategy_id}_{condition_number}')
-                #             is_enabled = str(enabled_val).lower() in ['true', 'on', '1']
-                #             schedules.append({
-                #                 'strategy_id': strategy_id,
-                #                 'condition_number': condition_number,
-                #                 'cron_expression': cron_expression,
-                #                 'is_enabled': is_enabled
-                #             })
-                # if schedules:
-                #     P.logger.info(f"setting_save schedules parsed: {len(schedules)} items")
+                Logic.scheduler_stop()
+                Logic.scheduler_start()
                 
-                # if schedules:
-                #     if not Logic.save_condition_schedules(schedules):
-                #         P.logger.warning('Failed to save condition schedules; continuing without scheduler update')
-                
-                # 스케줄러 재시작
-                try:
-                    Logic.scheduler_stop()
-                    Logic.scheduler_start()
-                    P.logger.info("setting_save scheduler restarted")
-                except Exception as e:
-                    P.logger.warning(f"Scheduler restart skipped: {e}")
-                
-                P.logger.info("setting_save success")
                 return jsonify({'ret': 'success', 'msg': '설정이 저장되었습니다.'})
-                
+
         except Exception as e:
-            P.logger.error(f"API error: {str(e)}")
+            P.logger.error(f"API error in {sub}: {str(e)}")
             P.logger.error(traceback.format_exc())
             return jsonify({'ret': 'error', 'msg': str(e)})
         
-        return jsonify({'ret': 'error', 'msg': 'Unknown sub-command'})
+        return jsonify({'ret': 'error', 'msg': f'Unknown sub-command: {sub}'})
 
     def scheduler_function(self):
         Logic.scheduler_start()
