@@ -10,41 +10,51 @@ setting = {
     'filepath': __file__,
     'use_db': True,
     'use_default_setting': True,
-    'home_module': None,  # base를 홈 모듈로 설정
+    'home_module': 'base',  # <-- 수정: 'base' (설정 페이지)를 홈 모듈로 지정
     'menu': {
         'uri': __package__,
         'name': '세븐스플릿',
+        # V V V 수정: 메뉴 리스트 구조 변경 V V V
         'list': [
-        {
-            'uri': 'base/setting',
-            'name': '설정'
-        },
-        {
-            'uri': 'screening/strategies',
-            'name': '전략선택'
-        },
-        {
-            'uri': 'screening/manual',
-            'name': '수동실행'
-        },
-        {
-            'uri': 'screening/list',
-            'name': '결과조회'
-        },
-        {
-            'uri': 'screening/history',
-            'name': '실행이력'
-        },
-        {
-            'uri': 'screening/statistics',
-            'name': '통계'
-        },
-        {
-            'uri': 'log',
-            'name': '로그'
-        }
+            {
+                # 'uri': 'base/setting' 대신 모듈 이름인 'base' 사용
+                'uri': 'base', 
+                'name': '설정'
+            },
+            {
+                # 'screening' 모듈을 부모로 하는 드롭다운 메뉴로 변경
+                'uri': 'screening', 
+                'name': '스크리닝',
+                'list': [
+                    {
+                        # 부모 'screening'이 있으므로 'strategies'만 명시
+                        'uri': 'strategies', 
+                        'name': '전략선택'
+                    },
+                    {
+                        'uri': 'manual', 
+                        'name': '수동실행'
+                    },
+                    {
+                        'uri': 'list', 
+                        'name': '결과조회'
+                    },
+                    {
+                        'uri': 'history', 
+                        'name': '실행이력'
+                    },
+                    {
+                        'uri': 'statistics', 
+                        'name': '통계'
+                    }
+                ]
+            },
+            {
+                'uri': 'log',
+                'name': '로그'
+            }
         ]
-        
+        # ^ ^ ^ 수정: 메뉴 리스트 구조 변경 ^ ^ ^
     },
     'setting_menu': None,
     'default_route': 'normal',
