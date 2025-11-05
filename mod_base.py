@@ -54,39 +54,22 @@ class ModuleBase(PluginModuleBase):
             </div>
             """
 
-    def process_command(self, command, arg1, arg2, arg3, req):
-        try:
-            if command == 'reset_db':
-                if self.reset_db():
+        def process_ajax(self, sub, req):
+            try:
+                if sub == 'setting_save':
+                    saved, changed = P.ModelSetting.setting_save(req)
+                    if changed:
+                        # 스케줄러 재시작 로직 (필요 시)
+                        Logic.task_scheduler_restart.apply_async()
+                    return jsonify(saved)
+    
+                elif sub == 'reset_db':
+                    P.ModelSetting.reset_db()
                     return jsonify({'ret': 'success', 'msg': 'DB가 초기화되었습니다.'})
-                else:
-                    return jsonify({'ret': 'error', 'msg': 'DB 초기화에 실패했습니다.'})
-            
-            elif command == 'setting_save':
-                P.logger.info("Attempting minimal save...")
-                if Logic.set_setting('debug_test', 'hello'):
-                    P.logger.info("Minimal save successful.")
-                    return jsonify({'ret': 'success', 'msg': '테스트 저장을 성공했습니다.'})
-                else:
-                    P.logger.error("Minimal save failed at Logic.set_setting.")
-                    return jsonify({'ret': 'error', 'msg': '최소 저장 테스트 실패.'})
-
-            return jsonify({'ret': 'not_implemented', 'msg': f'Unknown command: {command}'})
-
-        except Exception as e:
-            P.logger.error(f"Exception in process_command: {str(e)}")
-            P.logger.error(traceback.format_exc())
-            return jsonify({'ret': 'error', 'msg': str(e)})
-
-
-    def reset_db(self):
-        try:
-            Logic.db_init()
-            return True
-        except Exception as e:
-            P.logger.error(f"DB reset failed: {str(e)}")
-            P.logger.error(traceback.format_exc())
-            return False
-
+    
+            except Exception as e:
+                P.logger.error(f"Exception in process_ajax: {str(e)}")
+                P.logger.error(traceback.format_exc())
+                return jsonify({'ret': 'error', 'msg': str(e)})
     def scheduler_function(self):
         Logic.scheduler_start()

@@ -189,7 +189,7 @@ $(document).ready(function() {
         var formData = form.serialize();
 
         $.ajax({
-            url: '/{{ P.package_name }}/base/command/setting_save',
+            url: '/{{ P.package_name }}/base/ajax/setting_save',
             type: 'POST',
             data: formData,
             success: function(response) {
@@ -212,7 +212,7 @@ $(document).ready(function() {
             return;
         }
         $.ajax({
-            url: '/{{ P.package_name }}/base/command/reset_db',
+            url: '/{{ P.package_name }}/base/ajax/reset_db',
             type: 'POST',
             success: function(response) {
                 if (response.ret === 'success') {
