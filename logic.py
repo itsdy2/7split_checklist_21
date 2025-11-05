@@ -7,8 +7,7 @@ import time
 import json
 from datetime import datetime, date
 from flask import has_app_context
-from framework import app, db, socketio, F
-from framework.common.celery import celery
+from framework import app, db, socketio, F, celery
 from .setup import *
 
 
