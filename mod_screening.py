@@ -24,9 +24,9 @@ class ModuleScreening(PluginModuleBase):
         # 이 경우 'strategies' (first_menu)로 리디렉션합니다.
         if not sub:
             sub = 'strategies'
-            P.logger.info(f"sub is empty, redirecting to: {sub}")
-        
-        try:
+            try:
+
+
             # V V V 수정: 'detail' 페이지 로직 변경 V V V
             # 'detail'은 템플릿 이름에 포함되면 안 되므로 분기 처리
             if sub.startswith('detail'):
@@ -47,16 +47,16 @@ class ModuleScreening(PluginModuleBase):
                         pass
 
                 if not code:
-                    return render_template(template_name, arg=arg, error='종목 코드가 필요합니다.')
+                    return render_template(template_name, arg=arg, P=P, error='종목 코드가 필요합니다.')
 
                 result = db.session.query(StockScreeningResult).filter_by(code=code).order_by(StockScreeningResult.screening_date.desc()).first()
                 if not result:
-                    return render_template(template_name, arg=arg, error='종목을 찾을 수 없습니다.')
+                    return render_template(template_name, arg=arg, P=P, error='종목을 찾을 수 없습니다.')
                 
                 history = db.session.query(StockScreeningResult).filter_by(code=code).order_by(StockScreeningResult.screening_date.desc()).limit(30).all()
                 arg['result'] = result
                 arg['history'] = history
-                return render_template(template_name, arg=arg)
+                return render_template(template_name, arg=arg, P=P)
             # ^ ^ ^ 수정: 'detail' 페이지 로직 변경 ^ ^ ^
 
             template_name = f'{P.package_name}_{self.name}_{sub}.html'
@@ -66,7 +66,7 @@ class ModuleScreening(PluginModuleBase):
                 arg['strategies'] = Logic.get_strategies_metadata()
                 arg['default_strategy'] = Logic.get_setting('default_strategy')
                 P.logger.info(f"Loaded {len(arg['strategies'])} strategies")
-                return render_template(template_name, arg=arg)
+                return render_template(template_name, arg=arg, P=P)
 
             elif sub == 'list':
                 page = req.args.get('page', 1, type=int)
@@ -99,12 +99,12 @@ class ModuleScreening(PluginModuleBase):
                 arg['current_market'] = market_filter
                 arg['current_strategy'] = strategy_filter
                 arg['passed_only'] = passed_only
-                return render_template(template_name, arg=arg)
+                return render_template(template_name, arg=arg, P=P)
             
             elif sub == 'manual':
                 default_strategy = Logic.get_setting('default_strategy')
                 arg['default_strategy'] = default_strategy
-                return render_template(template_name, arg=arg)
+                return render_template(template_name, arg=arg, P=P)
             
             elif sub == 'scheduler':
                 # 전략 수준 스케줄 관리 (ConditionSchedule.condition_number = 0 사용)
@@ -118,20 +118,20 @@ class ModuleScreening(PluginModuleBase):
                         current[r.strategy_id] = {'enabled': r.is_enabled, 'cron': r.cron_expression}
                 arg['strategies'] = strategies
                 arg['current_schedule'] = current
-                return render_template(template_name, arg=arg)
+                return render_template(template_name, arg=arg, P=P)
             
             elif sub == 'history':
                 page = req.args.get('page', 1, type=int)
                 pagination = db.session.query(ScreeningHistory).order_by(ScreeningHistory.execution_date.desc()).paginate(page=page, per_page=20, error_out=False)
                 arg['histories'] = pagination.items
                 arg['pagination'] = pagination
-                return render_template(template_name, arg=arg)
+                return render_template(template_name, arg=arg, P=P)
 
             elif sub == 'statistics':
                 thirty_days_ago = datetime.now() - timedelta(days=30)
                 arg['daily_stats'] = db.session.query(StockScreeningResult.screening_date, func.count(StockScreeningResult.id).label('total'), func.sum(func.cast(StockScreeningResult.passed, db.Integer)).label('passed')).filter(StockScreeningResult.screening_date >= thirty_days_ago.date()).group_by(StockScreeningResult.screening_date).order_by(StockScreeningResult.screening_date.desc()).all()
                 arg['market_stats'] = db.session.query(StockScreeningResult.market, func.count(StockScreeningResult.id).label('total'), func.sum(func.cast(StockScreeningResult.passed, db.Integer)).label('passed')).filter(StockScreeningResult.passed == True).group_by(StockScreeningResult.market).all()
-                return render_template(template_name, arg=arg)
+                return render_template(template_name, arg=arg, P=P)
 
             elif sub == 'compare':
                 # 여러 전략/날짜로 결과를 동시에 비교 표시
@@ -161,13 +161,13 @@ class ModuleScreening(PluginModuleBase):
                 arg['grouped_results'] = grouped
                 arg['current_date'] = date_filter
                 arg['passed_only'] = passed_only
-                return render_template(template_name, arg=arg)
+                return render_template(template_name, arg=arg, P=P)
             
             elif sub == 'scaffold':
-                return render_template(template_name, arg=arg)
+                return render_template(template_name, arg=arg, P=P)
 
             elif sub == 'import':
-                return render_template(f'{P.package_name}_{self.name}_import.html', arg=arg)
+                return render_template(f'{P.package_name}_{self.name}_import.html', arg=arg, P=P)
 
             
             else:
