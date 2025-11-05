@@ -352,7 +352,7 @@ class {class_name}(BaseStrategy):
                 try:
                     with open(target_path, 'w', encoding='utf-8') as f:
                         f.write(code)
-                    return jsonify({'ret': 'success', 'msg': f''{strategy_id}' 전략을 성공적으로 가져왔습니다.'})
+                    return jsonify({'ret': 'success', 'msg': f"'{strategy_id}' 전략을 성공적으로 가져왔습니다."})
                 except Exception as e:
                     return jsonify({'ret': 'error', 'msg': f'파일 저장 중 오류 발생: {e}'})
 
