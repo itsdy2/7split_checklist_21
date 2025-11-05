@@ -66,7 +66,7 @@ class ModuleBase(PluginModuleBase):
                 form_data = req.form.to_dict()
                 for key, value in form_data.items():
                     Logic.set_setting(key, value)
-                # Logic.task_scheduler_restart.apply_async()
+                Logic.task_scheduler_restart.apply_async()
                 return jsonify({'ret': 'success', 'msg': '설정을 저장했습니다.'})
 
             return jsonify({'ret': 'not_implemented', 'msg': f'Unknown command: {command}'})

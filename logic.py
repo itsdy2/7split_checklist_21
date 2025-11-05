@@ -111,21 +111,7 @@ class Logic:
     
     @staticmethod
     def set_setting(key, value):
-        """설정 값 저장"""
-        try:
-            if F.config['use_celery']:
-                Logic.task_set_setting.apply_async((key, value)).get(timeout=5)
-                return True
-            else:
-                return Logic.task_set_setting(key, value)
-        except Exception as e:
-            logger.error(f"Error in set_setting: {e}")
-            logger.error(traceback.format_exc())
-            raise e
-
-    @staticmethod
-    @celery.task
-    def task_set_setting(key, value):
+        """설정 값 저장 (Celery 비사용, 직접 DB 저장)"""
         from .model import ModelSetting
         try:
             with app.app_context():
@@ -137,7 +123,8 @@ class Logic:
                 db.session.commit()
                 return True
         except Exception as e:
-            logger.error(f"Set setting error: {str(e)}")
+            logger.error(f"Direct DB save failed in set_setting: {e}")
+            logger.error(traceback.format_exc())
             db.session.rollback()
             return False
     
