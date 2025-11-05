@@ -24,9 +24,7 @@ class ModuleScreening(PluginModuleBase):
         # 이 경우 'strategies' (first_menu)로 리디렉션합니다.
         if not sub:
             sub = 'strategies'
-            try:
-
-
+        try:
             # V V V 수정: 'detail' 페이지 로직 변경 V V V
             # 'detail'은 템플릿 이름에 포함되면 안 되므로 분기 처리
             if sub.startswith('detail'):
