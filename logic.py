@@ -112,11 +112,16 @@ class Logic:
     @staticmethod
     def set_setting(key, value):
         """설정 값 저장"""
-        if F.config['use_celery']:
-            Logic.task_set_setting.apply_async((key, value))
-            return True
-        else:
-            return Logic.task_set_setting(key, value)
+        try:
+            if F.config['use_celery']:
+                Logic.task_set_setting.apply_async((key, value)).get(timeout=5)
+                return True
+            else:
+                return Logic.task_set_setting(key, value)
+        except Exception as e:
+            logger.error(f"Error in set_setting: {e}")
+            logger.error(traceback.format_exc())
+            raise e
 
     @staticmethod
     @celery.task
