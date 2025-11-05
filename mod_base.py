@@ -44,12 +44,14 @@ class ModuleBase(PluginModuleBase):
                 P.logger.error(f"Error in developer menu: {str(e)}")
                 P.logger.error(traceback.format_exc())
                 return f"<div class='container'><h3>개발 정의서 로드 오류</h3><pre>{traceback.format_exc()}</pre></div>"
-        else:
-            P.logger.warning(f"Unknown sub menu in base module: {sub}")
-            return f"<div class='container'><h3>알 수 없는 메뉴: {sub}</h3></div>"
-
-        try:
-            # 설정 페이지 렌더링
+            else:
+                P.logger.warning(f"Unknown sub menu in base module: {sub}")
+                return f"<div class='container'><h3>알 수 없는 메뉴: {sub}</h3></div>"
+        
+            template_name = f'{P.package_name}_{self.name}_{sub}.html'
+            P.logger.info(f"Rendering template: {template_name}")
+        
+            try:            # 설정 페이지 렌더링
             arg['settings'] = P.ModelSetting.to_dict()
             arg['strategies'] = Logic.get_strategies_metadata()
             return render_template(template_name, arg=arg, P=P)
