@@ -355,7 +355,10 @@ class {class_name}(BaseStrategy):
                     return jsonify({'ret': 'success', 'msg': f"'{strategy_id}' 전략을 성공적으로 가져왔습니다."})
                 except Exception as e:
                     return jsonify({'ret': 'error', 'msg': f'파일 저장 중 오류 발생: {e}'})
-
+        except Exception as e:
+            P.logger.error(f"Command error: {str(e)}")
+            P.logger.error(traceback.format_exc())
+            return jsonify({'ret': 'error', 'msg': str(e)})
 
         return jsonify({'ret': 'error', 'msg': 'Unknown command'})
 
