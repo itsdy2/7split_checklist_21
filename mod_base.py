@@ -62,8 +62,7 @@ class ModuleBase(PluginModuleBase):
                 else:
                     return jsonify({'ret': 'error', 'msg': 'DB 초기화에 실패했습니다.'})
             
-        elif command == 'setting_save':
-            try:
+            elif command == 'setting_save':
                 P.logger.info("Attempting minimal save...")
                 if Logic.set_setting('debug_test', 'hello'):
                     P.logger.info("Minimal save successful.")
@@ -71,10 +70,6 @@ class ModuleBase(PluginModuleBase):
                 else:
                     P.logger.error("Minimal save failed at Logic.set_setting.")
                     return jsonify({'ret': 'error', 'msg': '최소 저장 테스트 실패.'})
-            except Exception as e:
-                P.logger.error(f"Exception in minimal save: {str(e)}")
-                P.logger.error(traceback.format_exc())
-                return jsonify({'ret': 'error', 'msg': f'최소 저장 테스트 중 예외 발생: {str(e)}'})
 
             return jsonify({'ret': 'not_implemented', 'msg': f'Unknown command: {command}'})
 
