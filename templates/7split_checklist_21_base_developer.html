@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <h3><i class="material-icons">code</i> 플러그인 개발 정의서</h3>
+            <p class="text-muted">플러그인의 기술적 구조와 개발 방향을 정의합니다.</p>
+        </div>
+    </div>
+
+    <!-- 1. 프로젝트 개요 -->
+    <div class="card mb-4">
+        <div class="card-header"><h5 class="mb-0">1. 프로젝트 개요</h5></div>
+        <div class="card-body">
+            <p><strong>세븐스플릿 스크리닝 플러그인</strong>은 사용자가 정의한 투자 전략에 따라 주식 종목을 자동으로 필터링하는 FlaskFarm용 플러그인입니다. DART API를 통해 재무 데이터를 수집하고, 다양한 조건들을 조합하여 투자 유망 종목을 발굴하는 것을 목표로 합니다.</p>
+            <ul>
+                <li><strong>프로젝트명:</strong> 7split_checklist_21</li>
+                <li><strong>플러그인 타입:</strong> 데이터 수집, 분석 및 알림</li>
+                <li><strong>주요 기술 스택:</strong> Python, Flask, Celery, SQLAlchemy, Jinja2, Bootstrap, jQuery</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- 2. 핵심 아키텍처 -->
+    <div class="card mb-4">
+        <div class="card-header"><h5 class="mb-0">2. 핵심 아키텍처</h5></div>
+        <div class="card-body">
+            <p>본 플러그인은 FlaskFarm 프레임워크의 모듈 기반 구조를 따릅니다.</p>
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item"><strong>모듈 (Modules):</strong>
+                    <ul>
+                        <li><code>mod_base.py</code>: 설정, 도움말 등 플러그인의 기본 기능 담당.</li>
+                        <li><code>mod_screening.py</code>: 스크리닝 실행, 결과 조회 등 핵심 기능 담당.</li>
+                    </ul>
+                </li>
+                <li class="list-group-item"><strong>비즈니스 로직 (Logic):</strong>
+                    <ul>
+                        <li><code>logic.py</code>: DB CRUD, 스케줄링, Celery 작업 호출 등 메인 비즈니스 로직.</li>
+                        <li><code>logic_collector.py</code>: 외부 API(DART) 및 웹 크롤링을 통한 데이터 수집.</li>
+                        <li><code>logic_calculator.py</code>: 재무 비율(ROE, PBR 등) 계산.</li>
+                        <li><code>logic_notifier.py</code>: Discord 웹훅을 통한 알림 발송.</li>
+                    </ul>
+                </li>
+                <li class="list-group-item"><strong>전략 (Strategies):</strong>
+                    <ul>
+                        <li><code>strategies/</code> 디렉토리 내에 각 투자 전략을 개별 Python 파일로 정의.</li>
+                        <li><code>base_strategy.py</code>의 <code>BaseStrategy</code> 클래스를 상속받아 새로운 전략을 쉽게 추가할 수 있는 확장형 구조.</li>
+                    </ul>
+                </li>
+                <li class="list-group-item"><strong>데이터베이스 (Database):</strong>
+                    <ul>
+                        <li><code>model.py</code>: SQLAlchemy 모델 정의.</li>
+                        <li><code>ModelSetting</code>: 플러그인 설정값 저장.</li>
+                        <li><code>StockScreeningResult</code>: 스크리닝 결과 종목 정보 저장.</li>
+                        <li><code>ScreeningHistory</code>: 스크리닝 실행 이력 저장.</li>
+                    </ul>
+                </li>
+                <li class="list-group-item"><strong>UI (User Interface):</strong>
+                    <ul>
+                        <li><code>templates/</code> 디렉토리 내 Jinja2 템플릿 파일.</li>
+                        <li>FlaskFarm의 기본 템플릿(<code>base.html</code>)을 상속받아 일관된 UI 유지.</li>
+                        <li>Bootstrap과 jQuery를 사용한 동적 기능 구현.</li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- 3. 데이터 흐름 -->
+    <div class="card mb-4">
+        <div class="card-header"><h5 class="mb-0">3. 데이터 흐름 (스크리닝 프로세스)</h5></div>
+        <div class="card-body">
+            <ol>
+                <li><strong>실행 트리거:</strong> 사용자가 '수동실행' 버튼을 클릭하거나, 스케줄러에 의해 잡(Job)이 실행됩니다.</li>
+                <li><strong>Celery 작업 호출:</strong> <code>logic.py</code>의 <code>start_screening</code> 함수가 Celery 비동기 작업(<code>task_start_screening</code>)을 호출하여 백그라운드에서 스크리닝을 시작합니다. (UI 블로킹 방지)</li>
+                <li><strong>데이터 수집:</strong> <code>logic_collector.py</code>가 DART API 등을 통해 모든 상장 종목의 재무제표, 주가, 공시 정보 등을 수집합니다.</li>
+                <li><strong>필터링 적용:</strong> 선택된 전략 파일(예: <code>seven_split_21.py</code>)의 <code>apply_filters</code> 메서드가 각 종목의 데이터를 분석하고, '설정'에 저장된 조건 값과 비교하여 통과/실패 여부를 결정합니다.</li>
+                <li><strong>결과 저장:</strong> 필터링을 통과한 종목과 전체 분석 결과는 <code>StockScreeningResult</code> 테이블에, 실행 요약 정보는 <code>ScreeningHistory</code> 테이블에 저장됩니다.</li>
+                <li><strong>UI 업데이트 및 알림:</strong> Socket.IO를 통해 UI에 진행률을 실시간으로 전송하고, 스크리닝 완료 시 <code>logic_notifier.py</code>가 Discord로 결과를 발송합니다.</li>
+            </ol>
+        </div>
+    </div>
+
+    <!-- 4. 기여 및 확장 방법 -->
+    <div class="card">
+        <div class="card-header"><h5 class="mb-0">4. 기여 및 확장 방법</h5></div>
+        <div class="card-body">
+            <h6>새로운 투자 전략 추가하기</h6>
+            <ol>
+                <li>'스크리닝' -> '전략 스캐폴딩' 메뉴에서 새 전략의 기본 정보를 입력하여 뼈대 파일(scaffold)을 생성합니다.</li>
+                <li><code>strategies/</code> 폴더에 생성된 <code>{strategy_id}.py</code> 파일을 엽니다.</li>
+                <li><code>apply_filters</code> 메서드 내에 자신만의 필터링 로직을 Python 코드로 구현합니다. <code>stock</code> 딕셔너리 객체에 수집된 데이터가 모두 담겨있습니다.</li>
+                <li>(선택) 새 필터링 조건이 필요하면 <code>logic.py</code>의 <code>db_default</code>에 항목을 추가하고, <code>setting.html</code>에 해당 input 필드를 추가합니다.</li>
+            </ol>
+            <h6>UI 수정하기</h6>
+            <p><code>templates/</code> 폴더의 관련 <code>.html</code> 파일을 수정합니다. Flask의 Jinja2 템플릿 문법을 따르며, FlaskFarm에서 제공하는 매크로(macros)를 활용하여 일관성을 유지할 수 있습니다.</p>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

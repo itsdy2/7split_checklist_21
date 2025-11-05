@@ -165,6 +165,10 @@ class ModuleScreening(PluginModuleBase):
             
             elif sub == 'scaffold':
                 return render_template(template_name, arg=arg)
+
+            elif sub == 'import':
+                return render_template(f'{P.package_name}_{self.name}_import.html', arg=arg)
+
             
             else:
                 P.logger.warning(f"Unknown sub menu: {sub}")
@@ -181,10 +185,11 @@ class ModuleScreening(PluginModuleBase):
         try:
             if command == 'start':
                 strategy_id = arg1 if arg1 else Logic.get_setting('default_strategy')
-                def screening_job():
-                    Logic.start_screening(strategy_id=strategy_id, execution_type='manual')
-                Job.start(f'{P.package_name}_manual', screening_job)
-                return jsonify({'ret': 'success', 'msg': '스크리닝이 시작되었습니다.'})
+                result = Logic.start_screening(strategy_id=strategy_id, execution_type='manual')
+                if result['success']:
+                    return jsonify({'ret': 'success', 'msg': '스크리닝이 시작되었습니다.'})
+                else:
+                    return jsonify({'ret': 'error', 'msg': result.get('message', '스크리닝 시작에 실패했습니다.')})
             elif command == 'status':
                 history = db.session.query(ScreeningHistory).order_by(ScreeningHistory.execution_date.desc()).first()
                 if not history:
@@ -208,55 +213,8 @@ class ModuleScreening(PluginModuleBase):
                             strategy_name = strategy.strategy_name
                     data.append({'execution_date': h.execution_date.strftime('%Y-%m-%d %H:%M:%S'), 'strategy_name': strategy_name, 'total_stocks': h.total_stocks, 'passed_stocks': h.passed_stocks, 'execution_time': h.execution_time, 'status': h.status})
                 return jsonify({'ret': 'success', 'data': data})
-        except Exception as e:
-            P.logger.error(f"Command error: {str(e)}")
-            P.logger.error(traceback.format_exc())
-            return jsonify({'ret': 'error', 'msg': str(e)})
-        return jsonify({'ret': 'error', 'msg': 'Unknown command'})
-
-    def process_api(self, sub, req):
-        P.logger.info(f"ModuleScreening.process_api: sub={sub}")
-        try:
-            if sub == 'download_csv':
-                date_filter = req.args.get('date')
-                query = db.session.query(StockScreeningResult).filter(StockScreeningResult.passed == True)
-                if date_filter:
-                    query = query.filter(StockScreeningResult.screening_date == date_filter)
-                results = query.order_by(StockScreeningResult.market_cap.desc()).all()
-                output = StringIO()
-                writer = csv.writer(output)
-                writer.writerow(['종목코드', '종목명', '시장', '시가총액(억)', 'PER', 'PBR', 'ROE(%)', 'F-Score', '배당수익률(%)', '스크리닝일자'])
-                for r in results:
-                    writer.writerow([r.code, r.name, r.market, r.market_cap // 100000000 if r.market_cap else 0, r.per, r.pbr, r.roe_avg_3y, r.fscore, r.div_yield, r.screening_date])
-                output.seek(0)
-                return Response(output.getvalue(), mimetype='text/csv', headers={'Content-Disposition': f'attachment; filename=7split_screening_{date_filter or "all"}.csv'})
-            elif sub == 'schedule_save':
-                # 전략 스케줄 저장
-                from .model import ConditionSchedule
-                data = req.form if req.form else req.json
-                strategies = [s['id'] for s in Logic.get_strategies_metadata()]
-                # 기존 전략 스케줄 삭제(조건번호 0)
-                db.session.query(ConditionSchedule).filter(ConditionSchedule.condition_number == 0).delete()
-                saved = 0
-                for sid in strategies:
-                    cron = (data.get(f'cron_{sid}') or '').strip()
-                    enabled_raw = data.get(f'enabled_{sid}')
-                    enabled = str(enabled_raw).lower() in ['true', 'on', '1']
-                    if cron:
-                        row = ConditionSchedule(strategy_id=sid, condition_number=0, cron_expression=cron, is_enabled=enabled)
-                        db.session.add(row)
-                        saved += 1
-                db.session.commit()
-                # 스케줄러 재시작
-                try:
-                    Logic.scheduler_stop()
-                    Logic.scheduler_start()
-                except Exception as e:
-                    P.logger.warning(f"schedule_save: scheduler restart skipped: {e}")
-                P.logger.info(f"schedule_save: saved {saved} strategy schedules")
-                return jsonify({'ret': 'success', 'msg': '전략 스케줄이 저장되었습니다.'})
-            elif sub == 'scaffold_create':
-                data = req.form if req.form else req.json
+            elif command == 'create_scaffold':
+                data = req.form.to_dict()
                 strategy_id = (data.get('strategy_id') or '').strip()
                 strategy_name = (data.get('strategy_name') or '').strip()
                 version = (data.get('version') or '1.0.0').strip()
@@ -339,6 +297,86 @@ class {class_name}(BaseStrategy):
                     return jsonify({'ret': 'error', 'msg': f'파일 생성 실패: {str(e)}'})
 
                 return jsonify({'ret': 'success', 'msg': '전략 파일이 생성되었습니다.', 'file': target_path})
+
+            elif command == 'download_strategy':
+                strategy_id = arg1
+                if not strategy_id.replace('_', '').isalnum():
+                    return jsonify({'ret': 'error', 'msg': '잘못된 전략 ID입니다.'})
+                base_dir = os.path.dirname(os.path.abspath(__file__))
+                strategy_path = os.path.join(base_dir, 'strategies', f"{strategy_id}.py")
+                if os.path.exists(strategy_path):
+                    return send_file(strategy_path, as_attachment=True)
+                else:
+                    return jsonify({'ret': 'error', 'msg': '전략 파일을 찾을 수 없습니다.'})
+
+            elif command == 'delete_strategy':
+                strategy_id = arg1
+                if strategy_id in Logic.default_strategy_ids:
+                    return jsonify({'ret': 'error', 'msg': '기본 전략은 삭제할 수 없습니다.'})
+                if not strategy_id.replace('_', '').isalnum():
+                    return jsonify({'ret': 'error', 'msg': '잘못된 전략 ID입니다.'})
+                
+                base_dir = os.path.dirname(os.path.abspath(__file__))
+                strategy_path = os.path.join(base_dir, 'strategies', f"{strategy_id}.py")
+                
+                if os.path.exists(strategy_path):
+                    try:
+                        os.remove(strategy_path)
+                        return jsonify({'ret': 'success', 'msg': '전략이 삭제되었습니다.'})
+                    except Exception as e:
+                        return jsonify({'ret': 'error', 'msg': f'파일 삭제 중 오류 발생: {e}'})
+                else:
+                    return jsonify({'ret': 'error', 'msg': '전략 파일을 찾을 수 없습니다.'})
+
+            elif command == 'save_strategy_from_text':
+                code = req.form.get('strategy_code', '')
+                if not code.strip():
+                    return jsonify({'ret': 'error', 'msg': '코드가 비어있습니다.'})
+                
+                # 코드에서 strategy_id 추출 (정규식 사용)
+                import re
+                match = re.search(r"strategy_id\s*=\s*['\"](.+?)['\"]", code)
+                if not match:
+                    return jsonify({'ret': 'error', 'msg': "코드에서 'strategy_id'를 찾을 수 없습니다."})
+                
+                strategy_id = match.group(1)
+                if not strategy_id.replace('_', '').isalnum():
+                    return jsonify({'ret': 'error', 'msg': '추출된 strategy_id가 유효하지 않습니다.'})
+
+                base_dir = os.path.dirname(os.path.abspath(__file__))
+                target_path = os.path.join(base_dir, 'strategies', f"{strategy_id}.py")
+
+                if os.path.exists(target_path):
+                    return jsonify({'ret': 'error', 'msg': '동일한 ID의 전략이 이미 존재합니다.'})
+
+                try:
+                    with open(target_path, 'w', encoding='utf-8') as f:
+                        f.write(code)
+                    return jsonify({'ret': 'success', 'msg': f''{strategy_id}' 전략을 성공적으로 가져왔습니다.'})
+                except Exception as e:
+                    return jsonify({'ret': 'error', 'msg': f'파일 저장 중 오류 발생: {e}'})
+
+
+        return jsonify({'ret': 'error', 'msg': 'Unknown command'})
+
+    def process_api(self, sub, req):
+        P.logger.info(f"ModuleScreening.process_api: sub={sub}")
+        try:
+            if sub == 'download_csv':
+                date_filter = req.args.get('date')
+                query = db.session.query(StockScreeningResult).filter(StockScreeningResult.passed == True)
+                if date_filter:
+                    query = query.filter(StockScreeningResult.screening_date == date_filter)
+                results = query.order_by(StockScreeningResult.market_cap.desc()).all()
+                output = StringIO()
+                writer = csv.writer(output)
+                writer.writerow(['종목코드', '종목명', '시장', '시가총액(억)', 'PER', 'PBR', 'ROE(%)', 'F-Score', '배당수익률(%)', '스크리닝일자'])
+                for r in results:
+                    writer.writerow([r.code, r.name, r.market, r.market_cap // 100000000 if r.market_cap else 0, r.per, r.pbr, r.roe_avg_3y, r.fscore, r.div_yield, r.screening_date])
+                output.seek(0)
+                return Response(output.getvalue(), mimetype='text/csv', headers={'Content-Disposition': f'attachment; filename=7split_screening_{date_filter or "all"}.csv'})
+
+
         except Exception as e:
             P.logger.error(f"API error: {str(e)}")
             P.logger.error(traceback.format_exc())

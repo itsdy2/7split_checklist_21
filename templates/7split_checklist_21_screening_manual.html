@@ -103,17 +103,14 @@ $('#run_manual_btn').on('click', function() {
     $(this).prop('disabled', true).text('실행 중...');
     
     $.ajax({
-        url: '/7split_checklist_21/api/screening/start',
+        url: '/{{ P.package_name }}/screening/command/start/{{ arg.default_strategy }}',
         type: 'POST',
-        data: { 
-            strategy: '{{ arg.default_strategy }}' // mod_screening.py의 start API는 strategy ID를 받음
-        }, 
         success: function(response) {
             if (response.ret === 'success') {
                 notify('스크리닝이 시작되었습니다.', 'success');
                 $('#progress_container').show();
             } else {
-                notify('시작 실패: ' + response.message, 'error');
+                notify('시작 실패: ' + response.msg, 'error');
                 $('#run_manual_btn').prop('disabled', false).text('기본 전략 실행');
             }
         },

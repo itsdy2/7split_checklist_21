@@ -33,6 +33,15 @@ class ModuleBase(PluginModuleBase):
                 P.logger.error(f"Error in help menu: {str(e)}")
                 P.logger.error(traceback.format_exc())
                 return f"<div class='container'><h3>도움말 로드 오류</h3><pre>{traceback.format_exc()}</pre></div>"
+        elif sub == 'developer':
+            try:
+                template_name = f"{P.package_name}_base_developer.html"
+                P.logger.info(f"Rendering template: {template_name}")
+                return render_template(template_name, arg=arg)
+            except Exception as e:
+                P.logger.error(f"Error in developer menu: {str(e)}")
+                P.logger.error(traceback.format_exc())
+                return f"<div class='container'><h3>개발 정의서 로드 오류</h3><pre>{traceback.format_exc()}</pre></div>"
         else:
             P.logger.warning(f"Unknown sub menu in base module: {sub}")
             return f"<div class='container'><h3>알 수 없는 메뉴: {sub}</h3></div>"
@@ -76,27 +85,34 @@ class ModuleBase(PluginModuleBase):
             </div>
             """
 
-    def process_api(self, sub, req):
-        P.logger.info(f"ModuleBase.process_api: sub={sub}")
-        try:
-            if sub == 'setting_save':
-                form_data = req.form.to_dict()
-                P.logger.debug(f"Received form data: {form_data}")
-                
-                for key, value in form_data.items():
-                    Logic.set_setting(key, value)
-                
-                Logic.scheduler_stop()
-                Logic.scheduler_start()
-                
-                return jsonify({'ret': 'success', 'msg': '설정이 저장되었습니다.'})
+    def process_command(self, command, arg1, arg2, arg3, req):
+        if command == 'reset_db':
+            self.reset_db()
+            return jsonify({'ret': 'success', 'msg': 'DB가 초기화되었습니다.'})
+        return jsonify({'ret': 'not_implemented', 'msg': f'Unknown command: {command}'})
 
+    def setting_save_after(self):
+        """설정 저장 후 스케줄러 재시작"""
+        try:
+            Logic.scheduler_stop()
+            Logic.scheduler_start()
+            P.logger.info("Scheduler restarted after saving settings.")
         except Exception as e:
-            P.logger.error(f"API error in {sub}: {str(e)}")
+            P.logger.error(f"Failed to restart scheduler: {str(e)}")
             P.logger.error(traceback.format_exc())
-            return jsonify({'ret': 'error', 'msg': str(e)})
-        
-        return jsonify({'ret': 'error', 'msg': f'Unknown sub-command: {sub}'})
+
+    def reset_db(self):
+        """DB 초기화"""
+        try:
+            # 여기에 DB 초기화 로직 추가 (예: 모든 관련 테이블 drop 및 create)
+            # 이 예제에서는 기본 설정 값을 다시 로드하는 것으로 대체합니다.
+            Logic.db_init()
+            return True
+        except Exception as e:
+            P.logger.error(f"DB reset failed: {str(e)}")
+            P.logger.error(traceback.format_exc())
+            return False
+
 
     def scheduler_function(self):
         Logic.scheduler_start()

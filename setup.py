@@ -21,7 +21,8 @@ setting = {
                 'name': '설정',
                 'list': [
                     { 'uri': 'setting', 'name': '환경설정' },
-                    { 'uri': 'help', 'name': '도움말' }
+                    { 'uri': 'help', 'name': '도움말' },
+                    { 'uri': 'developer', 'name': '개발 정의서' }
                 ]
             },
             {
@@ -32,6 +33,7 @@ setting = {
                     { 'uri': 'compare', 'name': '비교 보기' },
                     { 'uri': 'scheduler', 'name': '스케줄' },
                     { 'uri': 'scaffold', 'name': '전략 스캐폴딩' },
+                    { 'uri': 'import', 'name': '전략 가져오기' },
                     { 'uri': 'manual', 'name': '수동실행' },
                     { 'uri': 'list', 'name': '결과조회' },
                     { 'uri': 'history', 'name': '실행이력' },

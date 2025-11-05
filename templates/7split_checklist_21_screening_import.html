@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <h3><i class="material-icons">upload_file</i> 전략 가져오기</h3>
+            <p class="text-muted">공유받은 전략(.py) 파일의 내용을 붙여넣어 플러그인에 추가합니다.</p>
+        </div>
+    </div>
+
+    <div class="alert alert-warning">
+        <strong><i class="material-icons">warning</i> 보안 경고</strong><br>
+        신뢰할 수 없는 출처의 코드를 붙여넣지 마세요. 악의적인 코드는 시스템에 심각한 손상을 줄 수 있습니다.
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <form id="importForm">
+                <div class="form-group">
+                    <label for="strategy_code">전략 코드</label>
+                    <textarea name="strategy_code" id="strategy_code" class="form-control" rows="20" placeholder="여기에 .py 파일의 전체 내용을 붙여넣으세요..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">가져오기</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+$('#importForm').on('submit', function(e) {
+    e.preventDefault();
+    var code = $('#strategy_code').val();
+    if (!code.trim()) {
+        notify('코드를 입력하세요.', 'warning');
+        return;
+    }
+
+    $.ajax({
+        url: '/{{ P.package_name }}/screening/command/save_strategy_from_text',
+        type: 'POST',
+        data: { strategy_code: code },
+        success: function(res) {
+            if (res.ret === 'success') {
+                notify(res.msg, 'success');
+                setTimeout(function() {
+                    location.href = '/{{ P.package_name }}/screening/strategies';
+                }, 1000);
+            } else {
+                notify(res.msg || '가져오기 실패', 'error');
+            }
+        },
+        error: function() {
+            notify('요청 실패', 'error');
+        }
+    });
+});
+</script>
+{% endblock %}

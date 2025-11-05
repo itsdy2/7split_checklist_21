@@ -11,23 +11,23 @@
         <div class="card-body">
           <form id="scaffoldForm">
             <div class="form-group">
-              <label>strategy_id <small class="text-muted">(영문/숫자/밑줄)</small></label>
+              <label>전략 ID <small class="text-muted">(영문/숫자/밑줄)</small></label>
               <input type="text" name="strategy_id" class="form-control" placeholder="예: my_strategy" required>
             </div>
             <div class="form-group">
-              <label>strategy_name</label>
+              <label>전략 이름</label>
               <input type="text" name="strategy_name" class="form-control" placeholder="예: 나의 전략" required>
             </div>
             <div class="form-group">
-              <label>version</label>
+              <label>버전</label>
               <input type="text" name="version" class="form-control" value="1.0.0">
             </div>
             <div class="form-group">
-              <label>required_data <small class="text-muted">쉼표로 구분: market, financial, disclosure, major_shareholder</small></label>
+              <label>필요 데이터 <small class="text-muted">쉼표로 구분: market, financial, disclosure, major_shareholder</small></label>
               <input type="text" name="required_data" class="form-control" value="market, financial">
             </div>
             <div class="form-group">
-              <label>conditions <small class="text-muted">줄마다 "번호:설명"</small></label>
+              <label>조건 <small class="text-muted">줄마다 "번호:설명"</small></label>
               <textarea name="conditions" class="form-control" rows="6" placeholder="1: 시가총액 ≥ 1000억원
 2: PER 5~20"></textarea>
             </div>
@@ -45,7 +45,7 @@ $('#scaffoldForm').on('submit', function(e) {
   e.preventDefault();
   var formData = $(this).serialize();
   $.ajax({
-    url: '/7split_checklist_21/api/screening/scaffold_create',
+    url: '/{{ P.package_name }}/screening/command/create_scaffold',
     type: 'POST',
     data: formData,
     success: function(res) {

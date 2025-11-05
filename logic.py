@@ -7,7 +7,8 @@ import time
 import json
 from datetime import datetime, date
 from flask import has_app_context
-from framework import db, socketio
+from framework import app, db, socketio, F
+from framework.common.celery import celery
 from .setup import *
 
 
@@ -20,6 +21,8 @@ package_name = P.package_name    # <-- 이 줄을 추가합니다. (표준 방�
 
 class Logic:
     """메인 로직 클래스 (전략 시스템)"""
+    
+    default_strategy_ids = ['seven_split_21', 'seven_split_mini', 'dividend_strategy', 'value_investing']
     
     db_default = {
         'dart_api_key': '',
@@ -69,23 +72,32 @@ class Logic:
     @staticmethod
     def db_init():
         """DB 초기화"""
-        # 앱 컨텍스트 외부에서는 DB 작업을 수행하지 않음
         if not has_app_context():
             logger.warning('db_init skipped: no application context')
             return
+        
+        if F.config['use_celery']:
+            Logic.task_db_init.apply_async().get()
+        else:
+            Logic.task_db_init()
+
+    @staticmethod
+    @celery.task
+    def task_db_init():
         from .model import ModelSetting
         try:
-            for key, value in Logic.db_default.items():
-                if db.session.query(ModelSetting).filter_by(key=key).count() == 0:
-                    db.session.add(ModelSetting(key, value))
-            db.session.commit()
-            logger.info("Database initialized")
+            with app.app_context():
+                for key, value in Logic.db_default.items():
+                    if db.session.query(ModelSetting).filter_by(key=key).count() == 0:
+                        db.session.add(ModelSetting(key, value))
+                db.session.commit()
+                logger.info("Database initialized via Celery")
         except Exception as e:
             logger.error(f"DB init error: {str(e)}")
             try:
                 db.session.rollback()
-            except Exception:
-                pass
+            except Exception as e_rb:
+                logger.error(f"Rollback failed: {e_rb}")
     
     
     @staticmethod
@@ -105,15 +117,25 @@ class Logic:
     @staticmethod
     def set_setting(key, value):
         """설정 값 저장"""
+        if F.config['use_celery']:
+            Logic.task_set_setting.apply_async((key, value))
+            return True
+        else:
+            return Logic.task_set_setting(key, value)
+
+    @staticmethod
+    @celery.task
+    def task_set_setting(key, value):
         from .model import ModelSetting
         try:
-            setting = db.session.query(ModelSetting).filter_by(key=key).first()
-            if setting:
-                setting.value = value
-            else:
-                db.session.add(ModelSetting(key, value))
-            db.session.commit()
-            return True
+            with app.app_context():
+                setting = db.session.query(ModelSetting).filter_by(key=key).first()
+                if setting:
+                    setting.value = value
+                else:
+                    db.session.add(ModelSetting(key, value))
+                db.session.commit()
+                return True
         except Exception as e:
             logger.error(f"Set setting error: {str(e)}")
             db.session.rollback()
@@ -136,6 +158,15 @@ class Logic:
     
     @staticmethod
     def start_screening(strategy_id=None, execution_type='manual'):
+        if F.config['use_celery']:
+            result = Logic.task_start_screening.apply_async((strategy_id, execution_type))
+            return {'success': True, 'message': f'Celery task started: {result.id}'}
+        else:
+            return Logic.task_start_screening(strategy_id, execution_type)
+
+    @staticmethod
+    @celery.task(bind=True)
+    def task_start_screening(self, strategy_id=None, execution_type='manual'):
         """
         스크리닝 시작 (전략 선택 가능)
         
@@ -448,24 +479,34 @@ class Logic:
     @staticmethod
     def save_condition_schedules(schedules):
         """개별 조건 스케줄 저장"""
-        from model import ConditionSchedule
-        try:
-            # 기존 스케줄 모두 삭제
-            db.session.query(ConditionSchedule).delete()
-
-            for schedule_data in schedules:
-                schedule = ConditionSchedule(
-                    strategy_id=schedule_data['strategy_id'],
-                    condition_number=schedule_data['condition_number'],
-                    cron_expression=schedule_data['cron_expression'],
-                    is_enabled=schedule_data['is_enabled']
-                )
-                db.session.add(schedule)
-            
-            db.session.commit()
-            Logic.scheduler_stop()
-            Logic.scheduler_start()
+        if F.config['use_celery']:
+            Logic.task_save_condition_schedules.apply_async((schedules,))
             return True
+        else:
+            return Logic.task_save_condition_schedules(schedules)
+
+    @staticmethod
+    @celery.task
+    def task_save_condition_schedules(schedules):
+        from .model import ConditionSchedule
+        try:
+            with app.app_context():
+                # 기존 스케줄 모두 삭제
+                db.session.query(ConditionSchedule).delete()
+
+                for schedule_data in schedules:
+                    schedule = ConditionSchedule(
+                        strategy_id=schedule_data['strategy_id'],
+                        condition_number=schedule_data['condition_number'],
+                        cron_expression=schedule_data['cron_expression'],
+                        is_enabled=schedule_data['is_enabled']
+                    )
+                    db.session.add(schedule)
+                
+                db.session.commit()
+                Logic.scheduler_stop()
+                Logic.scheduler_start()
+                return True
 
         except Exception as e:
             logger.error(f'Failed to save condition schedules: {e}')

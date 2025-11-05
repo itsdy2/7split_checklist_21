@@ -4,10 +4,10 @@
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-2" style="position: sticky; top: 0; background: var(--body-bg, #fff); z-index: 2; padding-top: 10px;">
         <h3 class="mb-0"><i class="material-icons">settings</i> 세븐스플릿 스크리닝 설정</h3>
-        <div>
-            <button type="button" class="btn btn-secondary mr-2" onclick="location.reload()">취소</button>
-            <button type="button" id="save_top_btn" class="btn btn-primary"><i class="material-icons">save</i> 저장</button>
-        </div>
+        {{ macros.m_button_group([
+            ['global_setting_save_btn', '설정 저장'],
+            ['global_reset_db_sub_btn', 'DB 초기화']
+        ])}}
     </div>
 
     <form id="setting_form">
@@ -19,7 +19,7 @@
             <div class="card-body">
                 <div class="form-group">
                     <label for="dart_api_key">
-                        DART API Key <span class="text-danger">*필수</span>
+                        DART API 인증키 <span class="text-danger">*필수</span>
                     </label>
                     <input 
                         type="text" 
@@ -180,37 +180,6 @@
     </form>
 </div>
 
-<script>
-$(document).ready(function() {
-    $('#save_top_btn').on('click', function(){ $('#setting_form').trigger('submit'); });
-    $('#setting_form').on('submit', function(e) {
-        e.preventDefault();
-        
-        var formData = $(this).serializeArray();
-        
-        // 체크되지 않은 체크박스의 값을 'False'로 추가
-        $(this).find('input[type=checkbox]:not(:checked)').each(function() {
-            formData.push({ name: this.name, value: 'False' });
-        });
 
-        $.ajax({
-            url: '/7split_checklist_21/api/base/setting_save',
-            type: 'POST',
-            data: $.param(formData),
-            success: function(response) {
-                if (response.ret === 'success') {
-                    notify(response.msg, 'success');
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                } else {
-                    notify('저장 실패: ' + response.msg, 'error');
-                }
-            },
-            error: function() {
-                notify('저장 중 오류가 발생했습니다.', 'error');
-            }
-        });
-    });
-});
-</script>
 
 {% endblock %}

@@ -1,34 +1,165 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 {% block content %}
 <div class="container-fluid">
-    <div class="row">
+    <div class="row mb-3">
         <div class="col-md-12">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">도움말</h3>
+            <h3><i class="material-icons">help_outline</i> 세븐스플릿 스크리닝 플러그인 도움말</h3>
+            <p class="text-muted">플러그인의 모든 기능을 효과적으로 사용하는 방법을 알아보세요.</p>
+        </div>
+    </div>
+
+    <!-- 1. 플러그인 개요 -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">1. 플러그인 개요</h5>
+        </div>
+        <div class="card-body">
+            <p>
+                <strong>세븐스플릿 스크리닝 플러그인</strong>은 사용자가 정의한 다양한 투자 전략에 따라 국내 주식(KOSPI/KOSDAQ)을 자동으로 분석하고 필터링하는 도구입니다.
+                DART API를 통해 최신 재무 데이터를 수집하고, 여러 조건을 조합하여 투자에 적합한 종목을 찾아줍니다.
+            </p>
+            <h6>주요 기능</h6>
+            <ul>
+                <li><strong>다양한 투자 전략 제공:</strong> 세븐스플릿, 배당주, 가치주 등 여러 내장 전략을 제공하며, 사용자가 직접 새로운 전략을 추가할 수 있습니다.</li>
+                <li><strong>상세한 필터링 조건:</strong> 시가총액, 부채비율, PER, PBR, ROE 등 수십 가지의 지표를 조합하여 자신만의 필터링 조건을 설정할 수 있습니다.</li>
+                <li><strong>자동화된 스크리닝:</strong> 원하는 시간에 매일 또는 특정 주기로 스크리닝을 자동 실행하고, 결과를 Discord로 받아볼 수 있습니다.</li>
+                <li><strong>직관적인 결과 분석:</strong> 스크리닝 결과를 목록, 비교, 통계 등 다양한 형태로 조회하고, 개별 종목의 상세 분석 및 과거 이력을 추적할 수 있습니다.</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- 2. 메뉴별 기능 설명 -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">2. 메뉴별 기능 설명</h5>
+        </div>
+        <div class="card-body">
+            <!-- 설정 -->
+            <div class="mb-4">
+                <h6><i class="material-icons">settings</i> 설정</h6>
+                <p>플러그인의 가장 핵심적인 부분으로, API 키, 알림, 스케줄, 필터링 조건 등을 설정합니다.</p>
+                <ul>
+                    <li><strong>API 설정:</strong> <a href="https://opendart.fss.or.kr/" target="_blank">DART 오픈 API</a>에서 발급받은 인증키를 입력해야 모든 기능이 정상 동작합니다. <strong>(필수)</strong></li>
+                    <li><strong>알림 설정:</strong> Discord Webhook URL을 입력하면 스크리닝 시작, 완료, 오류 발생 시 실시간 알림을 받을 수 있습니다.</li>
+                    <li><strong>스케줄 설정:</strong> '자동 실행 활성화'를 체크하고 시간을 지정하면, 해당 시간에 '기본 전략'으로 설정된 스크리닝이 매일(평일) 자동으로 실행됩니다.</li>
+                    <li><strong>필터링 조건:</strong> 각 투자 전략(세븐스플릿, 배당주, 가치주)별로 사용될 상세한 필터링 값을 설정합니다. 예를 들어, '최소 시가총액', '최대 부채비율' 등을 조절하여 자신만의 기준을 만들 수 있습니다.</li>
+                </ul>
+            </div>
+
+            <!-- 스크리닝 -->
+            <div>
+                <h6><i class="material-icons">search</i> 스크리닝</h6>
+                <p>실제 스크리닝을 실행하고 결과를 분석하는 메뉴입니다.</p>
+                <ul class="list-unstyled">
+                    <li class="media mb-3">
+                        <i class="material-icons mr-2">explore</i>
+                        <div class="media-body">
+                            <h6 class="mt-0 mb-1">전략선택</h6>
+                            등록된 모든 투자 전략을 카드 형태로 보여줍니다. 각 전략의 특징, 난이도, 조건 수를 확인할 수 있습니다.<br>
+                            - <strong>실행:</strong> 특정 전략으로 즉시 스크리닝을 시작합니다.<br>
+                            - <strong>기본으로 설정:</strong> '설정' 메뉴의 자동 실행 스케줄이나 '수동실행' 메뉴에서 사용될 기본 전략으로 지정합니다.<br>
+                            - <strong>선택 비교:</strong> 여러 전략을 체크박스로 선택한 후 '선택 비교' 버튼을 누르면, 해당 전략들의 결과를 한 화면에서 비교할 수 있습니다.
+                        </div>
+                    </li>
+                    <li class="media mb-3">
+                        <i class="material-icons mr-2">compare_arrows</i>
+                        <div class="media-body">
+                            <h6 class="mt-0 mb-1">비교 보기</h6>
+                            '전략선택' 페이지에서 비교하기로 선택한 전략들의 스크리닝 결과를 나란히 보여주어, 각 전략이 어떤 종목들을 찾아냈는지 쉽게 비교할 수 있습니다.
+                        </div>
+                    </li>
+                    <li class="media mb-3">
+                        <i class="material-icons mr-2">schedule</i>
+                        <div class="media-body">
+                            <h6 class="mt-0 mb-1">스케줄</h6>
+                            '설정' 메뉴의 전역 스케줄과 별개로, 각 전략마다 개별적인 실행 스케줄을 설정할 수 있습니다. CRON 표현식을 사용하여 "매주 월요일 오전 8시 30분"과 같이 복잡한 스케줄링이 가능합니다.<br>
+                            <small class="text-muted">예: <code>30 8 * * 1</code> (매주 월요일 08:30)</small>
+                        </div>
+                    </li>
+                    <li class="media mb-3">
+                        <i class="material-icons mr-2">build</i>
+                        <div class="media-body">
+                            <h6 class="mt-0 mb-1">전략 스캐폴딩 (고급)</h6>
+                            Python 코드를 직접 작성하여 자신만의 새로운 투자 전략을 만들 수 있는 기능입니다. `strategy_id`, `strategy_name` 등 필요한 정보를 입력하고 '생성' 버튼을 누르면, `strategies` 폴더에 새로운 전략 파일의 뼈대(scaffold)가 생성됩니다. 생성된 파일을 직접 수정하여 로직을 구현해야 합니다.
+                        </div>
+                    </li>
+                    <li class="media mb-3">
+                        <i class="material-icons mr-2">play_arrow</i>
+                        <div class="media-body">
+                            <h6 class="mt-0 mb-1">수동실행</h6>
+                            '전략선택' 페이지에서 '기본으로 설정'된 전략을 즉시 실행합니다. 자동 스케줄을 기다리지 않고 빠르게 결과를 확인하고 싶을 때 사용합니다.
+                        </div>
+                    </li>
+                    <li class="media mb-3">
+                        <i class="material-icons mr-2">list_alt</i>
+                        <div class="media-body">
+                            <h6 class="mt-0 mb-1">결과조회</h6>
+                            모든 스크리닝 결과를 날짜, 시장, 전략별로 필터링하여 볼 수 있습니다. '통과'된 종목만 보거나 전체 결과를 볼 수 있으며, 종목명을 클릭하면 상세 정보 페이지로 이동합니다.
+                        </div>
+                    </li>
+                    <li class="media mb-3">
+                        <i class="material-icons mr-2">history</i>
+                        <div class="media-body">
+                            <h6 class="mt-0 mb-1">실행이력 & 통계</h6>
+                            - <strong>실행이력:</strong> 과거에 실행된 모든 스크리닝의 기록(시작 시간, 소요 시간, 통과 종목 수, 상태 등)을 보여줍니다.<br>
+                            - <strong>통계:</strong> 일별/시장별 통과 종목 수를 차트로 보여주어 스크리닝 결과의 추이를 시각적으로 파악할 수 있습니다.
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. 문제 해결 -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">3. 문제 해결 (FAQ)</h5>
+        </div>
+        <div class="card-body">
+            <div class="accordion" id="faqAccordion">
+                <div class="card">
+                    <div class="card-header" id="faq1">
+                        <h2 class="mb-0">
+                            <button class="btn btn-link btn-block text-left" type="button" data-toggle="collapse" data-target="#collapse1">
+                                Q. 스크리닝을 실행했지만 아무 종목도 통과하지 못합니다.
+                            </button>
+                        </h2>
+                    </div>
+                    <div id="collapse1" class="collapse" data-parent="#faqAccordion">
+                        <div class="card-body">
+                            A. 대부분의 경우, <strong>'설정' 메뉴의 '필터링 조건'이 너무 엄격하기 때문</strong>입니다. 각 전략의 필터링 값(예: 최소 시가총액, 최소 ROE 등)을 조금씩 완화하여 다시 시도해 보세요. 또는, 주식 시장 상황에 따라 모든 조건을 만족하는 종목이 실제로 없을 수도 있습니다.
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <h4>플러그인 소개</h4>
-                    <p>세븐스플릿 스크리닝 플러그인은 세븐스플릿의 21가지 체크리스트를 기반으로 KOSPI/KOSDAQ 종목을 자동 스크리닝하는 도구입니다.</p>
-                    
-                    <h4>주요 기능</h4>
-                    <ul>
-                        <li>다양한 투자 전략 제공 (세븐스플릿 21, 미니, 배당주, 가치주)</li>
-                        <li>자동 스크리닝 스케줄링</li>
-                        <li>스크리닝 결과 조회 및 상세 분석</li>
-                        <li>Discord 알림</li>
-                    </ul>
-
-                    <h4>사용 방법</h4>
-                    <ol>
-                        <li><b>설정:</b> DART API 키를 입력하고, 필요시 Discord Webhook URL을 설정합니다.</li>
-                        <li><b>전략 선택:</b> 원하는 투자 전략을 선택하고 기본 전략으로 설정할 수 있습니다.</li>
-                        <li><b>스크리닝 실행:</b> 수동으로 스크리닝을 시작하거나, 설정된 시간에 자동으로 실행되도록 할 수 있습니다.</li>
-                        <li><b>결과 조회:</b> 스크리닝 결과를 목록에서 확인하고, 종목을 클릭하여 상세 정보를 볼 수 있습니다.</li>
-                    </ol>
-
-                    <h4>문제 해결</h4>
-                    <p>스크리닝이 실패하거나 오류가 발생하는 경우, 로그 메뉴에서 오류 메시지를 확인하거나 플러그인 개발자에게 문의하세요.</p>
+                <div class="card">
+                    <div class="card-header" id="faq2">
+                        <h2 class="mb-0">
+                            <button class="btn btn-link btn-block text-left collapsed" type="button" data-toggle="collapse" data-target="#collapse2">
+                                Q. 스크리닝 실행 버튼을 눌러도 아무 반응이 없거나 오류가 발생합니다.
+                            </button>
+                        </h2>
+                    </div>
+                    <div id="collapse2" class="collapse" data-parent="#faqAccordion">
+                        <div class="card-body">
+                            A. 가장 먼저 <strong>'설정' 메뉴에 DART API 키가 정확히 입력되었는지 확인</strong>하세요. 키가 없거나 잘못된 경우 데이터를 수집할 수 없어 오류가 발생합니다. 문제가 지속되면 '로그' 메뉴에서 자세한 오류 메시지를 확인하세요.
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header" id="faq3">
+                        <h2 class="mb-0">
+                            <button class="btn btn-link btn-block text-left collapsed" type="button" data-toggle="collapse" data-target="#collapse3">
+                                Q. 스케줄이 설정된 시간에 동작하지 않습니다.
+                            </button>
+                        </h2>
+                    </div>
+                    <div id="collapse3" class="collapse" data-parent="#faqAccordion">
+                        <div class="card-body">
+                            A. 두 가지를 확인해야 합니다.<br>
+                            1. <strong>'설정' 메뉴의 '자동 실행 활성화'</strong>가 체크되어 있는지 확인하세요. (전역 스케줄)<br>
+                            2. <strong>'스크리닝' → '스케줄' 메뉴</strong>에서 설정한 CRON 표현식이 올바른지, 그리고 '활성' 체크박스가 선택되어 있는지 확인하세요. (개별 전략 스케줄)
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

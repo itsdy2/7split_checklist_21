@@ -13,45 +13,45 @@
 
   <div class="card">
     <div class="card-body">
-      <div class="table-responsive">
-        <table class="table table-striped">
-          <thead class="thead-dark">
-            <tr>
-              <th>전략</th>
-              <th>CRON</th>
-              <th>활성</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for s in arg.strategies %}
-            <tr>
-              <td>{{ s.name }} <span class="small text-muted">({{ s.id }})</span></td>
-              <td style="max-width:300px;">
-                <input type="text" class="form-control form-control-sm" id="cron_{{ s.id }}" value="{{ arg.current_schedule[s.id].cron if s.id in arg.current_schedule else '' }}" placeholder="예: 0 9 * * 1-5">
-              </td>
-              <td>
-                <input type="checkbox" id="enabled_{{ s.id }}" {% if s.id in arg.current_schedule and arg.current_schedule[s.id].enabled %}checked{% endif %}>
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
+      <form id="schedule_form">
+        <div class="table-responsive">
+          <table class="table table-striped">
+            <thead class="thead-dark">
+              <tr>
+                <th>전략</th>
+                <th>CRON</th>
+                <th>활성</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for s in arg.strategies %}
+              <tr>
+                <td>{{ s.name }} <span class="small text-muted">({{ s.id }})</span></td>
+                <td style="max-width:300px;">
+                  <input type="text" class="form-control form-control-sm" name="cron_{{ s.id }}" id="cron_{{ s.id }}" value="{{ arg.current_schedule[s.id].cron if s.id in arg.current_schedule else '' }}" placeholder="예: 0 9 * * 1-5">
+                </td>
+                <td>
+                  <input type="checkbox" name="enabled_{{ s.id }}" id="enabled_{{ s.id }}" {% if s.id in arg.current_schedule and arg.current_schedule[s.id].enabled %}checked{% endif %}>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </form>
     </div>
   </div>
 </div>
 
 <script>
 $('#save_btn').on('click', function(){
-  var data = {};
-  {% for s in arg.strategies %}
-  data['cron_{{ s.id }}'] = $('#cron_{{ s.id }}').val();
-  data['enabled_{{ s.id }}'] = $('#enabled_{{ s.id }}').is(':checked') ? 'on' : '';
-  {% endfor %}
+  var form = $('#schedule_form');
+  var formData = form.serialize();
+
   $.ajax({
-    url: '/7split_checklist_21/api/screening/schedule_save',
+    url: '/{{ P.package_name }}/screening/command/save_schedules',
     type: 'POST',
-    data: data,
+    data: formData,
     success: function(res){
       if (res.ret === 'success') notify(res.msg, 'success');
       else notify(res.msg || '저장 실패', 'error');

@@ -108,6 +108,16 @@
                             <i class="material-icons">star</i> 기본으로 설정
                         </button>
                     </div>
+                    <div class="btn-group btn-block mt-2" role="group">
+                        <button class="btn btn-sm btn-outline-secondary" onclick="downloadStrategy('{{ strategy.id }}')">
+                            <i class="material-icons">download</i> 내보내기
+                        </button>
+                        {% if strategy.id not in ['seven_split_21', 'seven_split_mini', 'dividend_strategy', 'value_investing'] %}
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteStrategy('{{ strategy.id }}')">
+                            <i class="material-icons">delete</i> 삭제
+                        </button>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
@@ -166,8 +176,9 @@ $('#compare_selected_btn').on('click', function(){
     var selected = [];
     $('.strategy-check:checked').each(function(){ selected.push($(this).val()); });
     if (selected.length === 0) { notify('비교할 전략을 선택하세요.', 'warning'); return; }
-    location.href = '/7split_checklist_21/screening/compare?strategies=' + selected.join(',');
+    location.href = '/{{ P.package_name }}/screening/compare?strategies=' + selected.join(',');
 });
+
 // 전략 실행
 function runStrategy(strategyId) {
     if (!confirm('선택한 전략으로 스크리닝을 시작하시겠습니까?')) {
@@ -175,18 +186,13 @@ function runStrategy(strategyId) {
     }
     
     $.ajax({
-        // V V V 수정: API 경로 수정 V V V
-        url: '/7split_checklist_21/api/screening/start?arg1=' + strategyId,
-        // ^ ^ ^ 수정: API 경로 수정 ^ ^ ^
+        url: '/{{ P.package_name }}/screening/command/start/' + strategyId,
         type: 'POST',
         success: function(response) {
             if (response.ret === 'success') {
                 notify(response.msg, 'success');
-                // 수동 실행 페이지로 이동
                 setTimeout(function() {
-                    // V V V 수정: 페이지 링크 수정 V V V
-                    location.href = '/7split_checklist_21/screening/manual';
-                    // ^ ^ ^ 수정: 페이지 링크 수정 ^ ^ ^
+                    location.href = '/{{ P.package_name }}/screening/manual';
                 }, 1000);
             } else {
                 notify('시작 실패: ' + response.msg, 'error');
@@ -201,9 +207,7 @@ function runStrategy(strategyId) {
 // 기본 전략으로 설정
 function setDefaultStrategy(strategyId) {
     $.ajax({
-        // V V V 수정: API 경로 수정 V V V
-        url: '/7split_checklist_21/api/screening/set_default_strategy?arg1=' + strategyId,
-        // ^ ^ ^ 수정: API 경로 수정 ^ ^ ^
+        url: '/{{ P.package_name }}/screening/command/set_default_strategy/' + strategyId,
         type: 'POST',
         success: function(response) {
             if (response.ret === 'success') {
@@ -219,6 +223,34 @@ function setDefaultStrategy(strategyId) {
     });
 }
 
+// 전략 내보내기
+function downloadStrategy(strategyId) {
+    location.href = '/{{ P.package_name }}/screening/command/download_strategy/' + strategyId;
+}
+
+// 전략 삭제
+function deleteStrategy(strategyId) {
+    if (!confirm('정말로 이 전략을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
+        return;
+    }
+    
+    $.ajax({
+        url: '/{{ P.package_name }}/screening/command/delete_strategy/' + strategyId,
+        type: 'POST',
+        success: function(response) {
+            if (response.ret === 'success') {
+                notify(response.msg, 'success');
+                location.reload();
+            } else {
+                notify('삭제 실패: ' + response.msg, 'error');
+            }
+        },
+        error: function() {
+            notify('삭제 중 오류가 발생했습니다.', 'error');
+        }
+    });
+}
+
 // 페이지 로드 시 최근 이력 불러오기
 $(document).ready(function() {
     loadRecentHistory();
@@ -226,10 +258,8 @@ $(document).ready(function() {
 
 function loadRecentHistory() {
     $.ajax({
-        // V V V 수정: API 경로 수정 V V V
-        url: '/7split_checklist_21/api/screening/recent_history',
-        // ^ ^ ^ 수정: API 경로 수정 ^ ^ ^
-        type: 'GET',
+        url: '/{{ P.package_name }}/screening/command/recent_history',
+        type: 'POST',
         success: function(response) {
             if (response.ret === 'success' && response.data.length > 0) {
                 var html = '';
