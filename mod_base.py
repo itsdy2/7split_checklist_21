@@ -51,12 +51,13 @@ class ModuleBase(PluginModuleBase):
             template_name = f'{P.package_name}_{self.name}_{sub}.html'
             P.logger.info(f"Rendering template: {template_name}")
         
-            try:            # 설정 페이지 렌더링
-            arg['settings'] = P.ModelSetting.to_dict()
-            arg['strategies'] = Logic.get_strategies_metadata()
-            return render_template(template_name, arg=arg, P=P)
+    try:
+        # 설정 페이지 렌더링
+        arg['settings'] = P.ModelSetting.to_dict()
+        arg['strategies'] = Logic.get_strategies_metadata()
+        return render_template(template_name, arg=arg, P=P)
             
-        except Exception as e:
+    except Exception as e:
             P.logger.error(f"Error in setting menu: {str(e)}")
             P.logger.error(traceback.format_exc())
             return f"""
