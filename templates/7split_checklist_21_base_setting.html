@@ -4,10 +4,10 @@
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-2" style="position: sticky; top: 0; background: var(--body-bg, #fff); z-index: 2; padding-top: 10px;">
         <h3 class="mb-0"><i class="material-icons">settings</i> 세븐스플릿 스크리닝 설정</h3>
-        {{ macros.m_button_group([
-            ['global_setting_save_btn', '설정 저장'],
-            ['global_reset_db_sub_btn', 'DB 초기화']
-        ])}}
+        <div>
+            <button type="button" id="save_btn" class="btn btn-primary"><i class="material-icons">save</i> 저장</button>
+            <button type="button" id="reset_btn" class="btn btn-secondary">DB 초기화</button>
+        </div>
     </div>
 
     <form id="setting_form">
@@ -180,6 +180,54 @@
     </form>
 </div>
 
+<script>
+$(document).ready(function() {
+    // 저장 버튼 클릭
+    $('#save_btn').on('click', function(e) {
+        e.preventDefault();
+        var form = $('#setting_form');
+        var formData = form.serialize();
 
+        $.ajax({
+            url: '/{% raw %}{{P.package_name}}{% endraw %}/base/command/setting_save',
+            type: 'POST',
+            data: formData,
+            success: function(response) {
+                if (response.ret === 'success') {
+                    notify(response.msg, 'success');
+                } else {
+                    notify(response.msg, 'warning');
+                }
+            },
+            error: function() {
+                notify('저장 중 오류가 발생했습니다.', 'error');
+            }
+        });
+    });
+
+    // DB 초기화 버튼 클릭
+    $('#reset_btn').on('click', function(e) {
+        e.preventDefault();
+        if (!confirm('모든 설정을 초기값으로 되돌리시겠습니까?')) {
+            return;
+        }
+        $.ajax({
+            url: '/{% raw %}{{P.package_name}}{% endraw %}/base/command/reset_db',
+            type: 'POST',
+            success: function(response) {
+                if (response.ret === 'success') {
+                    notify(response.msg, 'success');
+                    setTimeout(function() { location.reload(); }, 1000);
+                } else {
+                    notify(response.msg, 'warning');
+                }
+            },
+            error: function() {
+                notify('초기화 중 오류가 발생했습니다.', 'error');
+            }
+        });
+    });
+});
+</script>
 
 {% endblock %}

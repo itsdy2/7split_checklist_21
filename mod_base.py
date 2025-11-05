@@ -58,15 +58,19 @@ class ModuleBase(PluginModuleBase):
         if command == 'reset_db':
             self.reset_db()
             return jsonify({'ret': 'success', 'msg': 'DB가 초기화되었습니다.'})
+        elif command == 'setting_save':
+            try:
+                form_data = req.form.to_dict()
+                for key, value in form_data.items():
+                    Logic.set_setting(key, value)
+                Logic.task_scheduler_restart.apply_async()
+                return jsonify({'ret': 'success', 'msg': '설정을 저장했습니다.'})
+            except Exception as e:
+                P.logger.error(f"Failed to save settings: {str(e)}")
+                P.logger.error(traceback.format_exc())
+                return jsonify({'ret': 'error', 'msg': '설정 저장 중 오류가 발생했습니다.'})
         return jsonify({'ret': 'not_implemented', 'msg': f'Unknown command: {command}'})
 
-    def setting_save_after(self):
-        try:
-            P.logger.info("Queueing scheduler restart task...")
-            Logic.task_scheduler_restart.apply_async()
-        except Exception as e:
-            P.logger.error(f"Failed to queue scheduler restart task: {str(e)}")
-            P.logger.error(traceback.format_exc())
 
     def reset_db(self):
         try:
