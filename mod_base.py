@@ -11,13 +11,15 @@ class ModuleBase(PluginModuleBase):
         self.db_default = Logic.db_default
         P.logger.info("ModuleBase initialized")
 
-    def process_menu(self, sub, req):
-        P.logger.info(f"ModuleBase.process_menu called: sub={sub}")
-        # 요청 컨텍스트 내에서 DB 초기화 수행 (app context 보장)
+    def plugin_load(self):
+        """플러그인 로드 시 1회 실행"""
         try:
             Logic.db_init()
         except Exception as e:
-            P.logger.error(f"db_init in request context failed: {e}")
+            P.logger.error(f"db_init in plugin_load failed: {e}")
+
+    def process_menu(self, sub, req):
+        P.logger.info(f"ModuleBase.process_menu called: sub={sub}")
         arg = P.ModelSetting.to_dict()
         
         # 기본 페이지 라우팅
@@ -47,30 +49,10 @@ class ModuleBase(PluginModuleBase):
             return f"<div class='container'><h3>알 수 없는 메뉴: {sub}</h3></div>"
 
         try:
-            # 설정 값 로드
-            settings = {}
-            for key in self.db_default.keys():
-                settings[key] = Logic.get_setting(key)
-            
-            # 전략 정보 로드
-            try:
-                # from strategies import get_strategies_info # 원본에는 strategies 임포트가 없음. 해당 파일은 strategies 폴더 하위에 있음.
-                # logic.py 에 이미 strategies 임포트하는 함수가 있으므로 Logic 클래스를 통해 호출
-                strategies = Logic.get_strategies_metadata()
-                P.logger.info(f"Loaded {len(strategies)} strategies")
-            except Exception as e:
-                P.logger.error(f"Failed to load strategies: {str(e)}")
-                P.logger.error(traceback.format_exc())
-                strategies = []
-            
-            arg['settings'] = settings
-            arg['strategies'] = strategies
-            
-            # 템플릿 이름: 7split_checklist_21_base_setting.html
-            template_name = f'{P.package_name}_{self.name}_{sub}.html'
-            P.logger.info(f"Rendering template: {template_name}")
-            
-            return render_template(template_name, arg=arg)
+            # 설정 페이지 렌더링
+            arg['settings'] = P.ModelSetting.to_dict()
+            arg['strategies'] = Logic.get_strategies_metadata()
+            return render_template(template_name, arg=arg, P=P)
             
         except Exception as e:
             P.logger.error(f"Error in setting menu: {str(e)}")
