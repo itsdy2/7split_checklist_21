@@ -71,10 +71,6 @@ class Logic:
     @staticmethod
     def db_init():
         """DB 초기화"""
-        if not has_app_context():
-            logger.warning('db_init skipped: no application context')
-            return
-        
         if F.config['use_celery']:
             Logic.task_db_init.apply_async().get()
         else:
@@ -624,20 +620,21 @@ class Logic:
     def scheduler_stop():
         """스케줄러 중지"""
         from framework.job import Job
-        from model import ConditionSchedule
+        from .model import ConditionSchedule
         try:
-            from framework.job import Job
-            Job.scheduler.remove_job(f'{package_name}_auto')
-            schedules = db.session.query(ConditionSchedule).all()
-            for schedule in schedules:
-                job_id = f'{package_name}_condition_{schedule.strategy_id}_{schedule.condition_number}'
-                try:
-                    Job.scheduler.remove_job(job_id)
-                except Exception as e:
-                    logger.debug(f'Failed to remove job {job_id}: {e}')
-            logger.info("Scheduler stopped")
+            Job.scheduler.remove_all_jobs()
+            logger.info("All scheduler jobs stopped")
         except Exception as e:
             logger.debug(f"Scheduler stop error: {str(e)}")
+
+    @staticmethod
+    @celery.task
+    def task_scheduler_restart():
+        """Celery 작업으로 스케줄러 재시작"""
+        logger.info("Restarting scheduler via Celery task...")
+        Logic.scheduler_stop()
+        Logic.scheduler_start()
+        logger.info("Scheduler restart task completed.")
 
 def cron_to_dict(cron_expression):
     """Cron 표현식을 APScheduler trigger 인자로 변환"""

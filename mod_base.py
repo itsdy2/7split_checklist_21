@@ -62,11 +62,10 @@ class ModuleBase(PluginModuleBase):
 
     def setting_save_after(self):
         try:
-            Logic.scheduler_stop()
-            Logic.scheduler_start()
-            P.logger.info("Scheduler restarted after saving settings.")
+            P.logger.info("Queueing scheduler restart task...")
+            Logic.task_scheduler_restart.apply_async()
         except Exception as e:
-            P.logger.error(f"Failed to restart scheduler: {str(e)}")
+            P.logger.error(f"Failed to queue scheduler restart task: {str(e)}")
             P.logger.error(traceback.format_exc())
 
     def reset_db(self):
