@@ -70,15 +70,7 @@ class Logic:
     
     @staticmethod
     def db_init():
-        """DB 초기화"""
-        if F.config['use_celery']:
-            Logic.task_db_init.apply_async().get()
-        else:
-            Logic.task_db_init()
-
-    @staticmethod
-    @celery.task
-    def task_db_init():
+        """DB 초기화 (Celery 비사용, 직접 DB 저장)"""
         from .model import ModelSetting
         try:
             with app.app_context():
@@ -86,13 +78,11 @@ class Logic:
                     if db.session.query(ModelSetting).filter_by(key=key).count() == 0:
                         db.session.add(ModelSetting(key, value))
                 db.session.commit()
-                logger.info("Database initialized via Celery")
+                logger.info("Database initialized directly.")
         except Exception as e:
-            logger.error(f"DB init error: {str(e)}")
-            try:
-                db.session.rollback()
-            except Exception as e_rb:
-                logger.error(f"Rollback failed: {e_rb}")
+            logger.error(f"Direct DB init failed: {e}")
+            logger.error(traceback.format_exc())
+            db.session.rollback()
     
     
     @staticmethod
