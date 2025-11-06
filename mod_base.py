@@ -38,7 +38,7 @@ class ModuleBase(PluginModuleBase):
                 
                 strategies = Logic.get_strategies_metadata()
                 arg['strategies'] = strategies # Keep for other potential uses in template
-                arg['strategy_options'] = [(s.strategy_id, s.strategy_name) for s in strategies]
+                arg['strategy_options'] = [(s['id'], s['name']) for s in strategies]
                 
                 return render_template(template_name, arg=arg, P=P)
 

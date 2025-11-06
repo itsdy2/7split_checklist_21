@@ -235,8 +235,16 @@ class Notifier:
 
             condition_name = strategy.conditions.get(condition_number, 'N/A')
 
+            # Use getattr to safely get strategy_name in case it's an attribute or dict
+            if hasattr(strategy, 'strategy_name'):
+                strategy_name = strategy.strategy_name
+            elif isinstance(strategy, dict) and 'strategy_name' in strategy:
+                strategy_name = strategy['strategy_name']
+            else:
+                strategy_name = 'Unknown Strategy'
+
             embed = {
-                "title": f"📊 개별 조건 실행 결과: {strategy.strategy_name}",
+                "title": f"📊 개별 조건 실행 결과: {strategy_name}",
                 "description": f"**{condition_name}** 조건의 스크리닝 결과입니다.",
                 "color": 4886754, # 보라색
                 "fields": [

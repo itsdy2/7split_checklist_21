@@ -75,7 +75,8 @@ class ModuleScreening(PluginModuleBase):
             P.logger.info(f"Rendering template: {template_name}")
             
             if page == 'strategies':
-                arg['strategies'] = Logic.get_strategies_metadata()
+                strategies = Logic.get_strategies_metadata()
+                arg['strategies'] = strategies
                 arg['default_strategy'] = P.ModelSetting.get('default_strategy')
                 P.logger.info(f"Loaded {len(arg['strategies'])} strategies")
                 return render_template(template_name, arg=arg, P=P)
@@ -167,8 +168,9 @@ class ModuleScreening(PluginModuleBase):
                         query = query.filter(StockScreeningResult.passed == True)
                     grouped[sid] = query.order_by(StockScreeningResult.screening_date.desc(), StockScreeningResult.market_cap.desc()).limit(200).all()
 
+                available_strategies = Logic.get_strategies_metadata()
                 arg['selected_strategies'] = selected
-                arg['available_strategies'] = Logic.get_strategies_metadata()
+                arg['available_strategies'] = available_strategies
                 arg['grouped_results'] = grouped
                 arg['current_date'] = date_filter
                 arg['passed_only'] = passed_only
