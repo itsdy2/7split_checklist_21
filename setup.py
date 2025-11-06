@@ -51,12 +51,13 @@ setting = {
 P = create_plugin_instance(setting)
 
 try:
+    # Define PluginModelSetting right after creating P to make it available immediately
+    PluginModelSetting = P.ModelSetting
+    
     from .mod_base import ModuleBase
     from .mod_screening import ModuleScreening
     
     P.set_module_list([ModuleBase, ModuleScreening])
-
-    PluginModelSetting = P.ModelSetting
     
 except Exception as e:
     P.logger.error(f'Exception:{str(e)}')

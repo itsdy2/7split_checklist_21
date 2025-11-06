@@ -10,26 +10,38 @@ from io import StringIO
 import os
 
 class ModuleScreening(PluginModuleBase):
+    # Define the db_default directly to avoid import during initialization
+    _db_default = {
+        'dart_api_key': '',
+        'discord_webhook_url': '',
+        'auto_start': 'False',
+        'screening_time': '09:00',
+        'default_strategy': 'seven_split_21',
+        'notification_discord': 'True',
+        'use_multiprocessing': 'False',
+        'screening_interval_days': '1',
+        # ... (기존 db_default 내용과 동일)
+    }
+
     def __init__(self, P):
         super(ModuleScreening, self).__init__(P, name='screening', first_menu='strategies')
-        from .logic import Logic
-        self.db_default = Logic.db_default
+        self.db_default = ModuleScreening._db_default
         self.default_strategy_ids = ['seven_split_21', 'seven_split_mini', 'dividend_strategy', 'value_investing']
         P.logger.info("ModuleScreening initialized")
 
-    def process_menu(self, sub, req):
+    def process_menu(self, page, req):
         from .logic import Logic
-        P.logger.info(f"ModuleScreening.process_menu called: sub={sub}")
+        P.logger.info(f"ModuleScreening.process_menu called: page={page}")
         arg = P.ModelSetting.to_dict()
         
-        # setup.py 수정으로 인해 'screening' 메뉴 클릭 시 sub가 None으로 들어옵니다.
+        # setup.py 수정으로 인해 'screening' 메뉴 클릭 시 page가 None으로 들어옵니다.
         # 이 경우 'strategies' (first_menu)로 리디렉션합니다.
-        if not sub:
-            sub = 'strategies'
+        if not page:
+            page = 'strategies'
         try:
             # V V V 수정: 'detail' 페이지 로직 변경 V V V
             # 'detail'은 템플릿 이름에 포함되면 안 되므로 분기 처리
-            if sub.startswith('detail'):
+            if page.startswith('detail'):
                 template_name = f'{P.package_name}_{self.name}_detail.html'
                 P.logger.info(f"Rendering template: {template_name}")
                 
@@ -59,17 +71,17 @@ class ModuleScreening(PluginModuleBase):
                 return render_template(template_name, arg=arg, P=P)
             # ^ ^ ^ 수정: 'detail' 페이지 로직 변경 ^ ^ ^
 
-            template_name = f'{P.package_name}_{self.name}_{sub}.html'
+            template_name = f'{P.package_name}_{self.name}_{page}.html'
             P.logger.info(f"Rendering template: {template_name}")
             
-            if sub == 'strategies':
+            if page == 'strategies':
                 arg['strategies'] = Logic.get_strategies_metadata()
                 arg['default_strategy'] = P.ModelSetting.get('default_strategy')
                 P.logger.info(f"Loaded {len(arg['strategies'])} strategies")
                 return render_template(template_name, arg=arg, P=P)
 
-            elif sub == 'list':
-                page = req.args.get('page', 1, type=int)
+            elif page == 'list':
+                page_num = req.args.get('page', 1, type=int)
                 per_page = req.args.get('per_page', 50, type=int)
                 date_filter = req.args.get('date')
                 market_filter = req.args.get('market')
@@ -87,7 +99,7 @@ class ModuleScreening(PluginModuleBase):
                     query = query.filter(StockScreeningResult.passed == True)
                 
                 query = query.order_by(StockScreeningResult.screening_date.desc(), StockScreeningResult.market_cap.desc())
-                pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+                pagination = query.paginate(page=page_num, per_page=per_page, error_out=False)
                 
                 available_dates = db.session.query(StockScreeningResult.screening_date).distinct().order_by(StockScreeningResult.screening_date.desc()).limit(30).all()
                 dates = [d[0] for d in available_dates]
@@ -101,11 +113,11 @@ class ModuleScreening(PluginModuleBase):
                 arg['passed_only'] = passed_only
                 return render_template(template_name, arg=arg, P=P)
             
-            elif sub == 'manual':
+            elif page == 'manual':
                 arg['default_strategy'] = P.ModelSetting.get('default_strategy')
                 return render_template(template_name, arg=arg, P=P)
             
-            elif sub == 'scheduler':
+            elif page == 'scheduler':
                 # 전략 수준 스케줄 관리 (ConditionSchedule.condition_number = 0 사용)
                 from .model import ConditionSchedule
                 strategies = Logic.get_strategies_metadata()
@@ -119,20 +131,20 @@ class ModuleScreening(PluginModuleBase):
                 arg['current_schedule'] = current
                 return render_template(template_name, arg=arg, P=P)
             
-            elif sub == 'history':
-                page = req.args.get('page', 1, type=int)
-                pagination = db.session.query(ScreeningHistory).order_by(ScreeningHistory.execution_date.desc()).paginate(page=page, per_page=20, error_out=False)
+            elif page == 'history':
+                page_num = req.args.get('page', 1, type=int)
+                pagination = db.session.query(ScreeningHistory).order_by(ScreeningHistory.execution_date.desc()).paginate(page=page_num, per_page=20, error_out=False)
                 arg['histories'] = pagination.items
                 arg['pagination'] = pagination
                 return render_template(template_name, arg=arg, P=P)
 
-            elif sub == 'statistics':
+            elif page == 'statistics':
                 thirty_days_ago = datetime.now() - timedelta(days=30)
                 arg['daily_stats'] = db.session.query(StockScreeningResult.screening_date, func.count(StockScreeningResult.id).label('total'), func.sum(func.cast(StockScreeningResult.passed, db.Integer)).label('passed')).filter(StockScreeningResult.screening_date >= thirty_days_ago.date()).group_by(StockScreeningResult.screening_date).order_by(StockScreeningResult.screening_date.desc()).all()
                 arg['market_stats'] = db.session.query(StockScreeningResult.market, func.count(StockScreeningResult.id).label('total'), func.sum(func.cast(StockScreeningResult.passed, db.Integer)).label('passed')).filter(StockScreeningResult.passed == True).group_by(StockScreeningResult.market).all()
                 return render_template(template_name, arg=arg, P=P)
 
-            elif sub == 'compare':
+            elif page == 'compare':
                 # 여러 전략/날짜로 결과를 동시에 비교 표시
                 # 쿼리: ?strategies=a,b,c&date=YYYY-MM-DD&passed_only=true
                 strategies_q = req.args.get('strategies', '')
@@ -162,21 +174,21 @@ class ModuleScreening(PluginModuleBase):
                 arg['passed_only'] = passed_only
                 return render_template(template_name, arg=arg, P=P)
             
-            elif sub == 'scaffold':
+            elif page == 'scaffold':
                 return render_template(template_name, arg=arg, P=P)
 
-            elif sub == 'import':
+            elif page == 'import':
                 return render_template(f'{P.package_name}_{self.name}_import.html', arg=arg, P=P)
 
             
             else:
-                P.logger.warning(f"Unknown sub menu: {sub}")
-                return f"<div class='container'><h3>알 수 없는 메뉴: {sub}</h3></div>"
+                P.logger.warning(f"Unknown sub menu: {page}")
+                return f"<div class='container'><h3>알 수 없는 메뉴: {page}</h3></div>"
 
         except Exception as e:
-            P.logger.error(f"Error in process_menu '{sub}': {str(e)}")
+            P.logger.error(f"Error in process_menu '{page}': {str(e)}")
             P.logger.error(traceback.format_exc())
-            return f"<div class='container'><div class='alert alert-danger'><h3>오류 발생</h3><p><strong>메뉴:</strong> {sub}</p><p><strong>에러:</strong> {str(e)}</p><pre>{traceback.format_exc()}</pre></div></div>"
+            return f"<div class='container'><div class='alert alert-danger'><h3>오류 발생</h3><p><strong>메뉴:</strong> {page}</p><p><strong>에러:</strong> {str(e)}</p><pre>{traceback.format_exc()}</pre></div></div>"
     
     # (process_command, process_api는 변경 없음)
     def process_command(self, command, arg1, arg2, arg3, req):

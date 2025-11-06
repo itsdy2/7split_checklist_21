@@ -67,20 +67,19 @@ class Logic:
             dict: 실행 결과
         """
         from .setup import PluginModelSetting
-        from .strategies import get_strategy
+        from .strategies import get_strategy as get_strategy_func
         from .model import StockScreeningResult, ScreeningHistory, FilterDetail
         from .logic_collector import DataCollector
         from .logic_calculator import Calculator
         from .logic_notifier import Notifier
         start_time = time.time()
-        from .strategies import get_strategy
         
         # 기본 전략 설정
         if strategy_id is None:
             strategy_id = PluginModelSetting.get('default_strategy')
         
         # 전략 로드
-        strategy = get_strategy(strategy_id)
+        strategy = get_strategy_func(strategy_id)
         
         if not strategy:
             error_msg = f"존재하지 않는 전략: {strategy_id}"
@@ -376,8 +375,8 @@ class Logic:
             return Logic.task_save_condition_schedules(schedules)
 
     @staticmethod
-    @celery.task
-    def task_save_condition_schedules(schedules):
+    @celery.task(bind=True)
+    def task_save_condition_schedules(self, schedules):
         from .model import ConditionSchedule
         try:
             with app.app_context():
@@ -407,13 +406,13 @@ class Logic:
     def run_single_condition(strategy_id, condition_number):
         """단일 조건 실행"""
         from .setup import PluginModelSetting
-        from strategies import get_strategy
-        from logic_collector import DataCollector
-        from logic_notifier import Notifier
+        from .strategies import get_strategy as get_strategy_func
+        from .logic_collector import DataCollector
+        from .logic_notifier import Notifier
         try:
             logger.info(f'Running single condition: {strategy_id} - {condition_number}')
             
-            strategy = get_strategy(strategy_id)
+            strategy = get_strategy_func(strategy_id)
             if not strategy:
                 logger.error(f'Strategy not found: {strategy_id}')
                 return
@@ -525,8 +524,8 @@ class Logic:
             logger.debug(f"Scheduler stop error: {str(e)}")
 
     @staticmethod
-    @celery.task
-    def task_scheduler_restart():
+    @celery.task(bind=True)
+    def task_scheduler_restart(self):
         """Celery 작업으로 스케줄러 재시작"""
         logger.info("Restarting scheduler via Celery task...")
         Logic.scheduler_stop()

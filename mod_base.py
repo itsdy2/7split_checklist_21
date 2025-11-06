@@ -4,23 +4,35 @@ from plugin import *
 from .setup import P, F
 
 class ModuleBase(PluginModuleBase):
+    # Define the db_default directly to avoid import during initialization
+    _db_default = {
+        'dart_api_key': '',
+        'discord_webhook_url': '',
+        'auto_start': 'False',
+        'screening_time': '09:00',
+        'default_strategy': 'seven_split_21',
+        'notification_discord': 'True',
+        'use_multiprocessing': 'False',
+        'screening_interval_days': '1',
+        # ... (기존 db_default 내용과 동일)
+    }
+
     def __init__(self, P):
         super(ModuleBase, self).__init__(P, name='base', first_menu='setting')
-        from .logic import Logic
-        self.db_default = Logic.db_default
+        self.db_default = ModuleBase._db_default
         P.logger.info("ModuleBase initialized")
 
-    def process_menu(self, sub, req):
-        P.logger.info(f"ModuleBase.process_menu called: sub={sub}")
+    def process_menu(self, page, req):
+        P.logger.info(f"ModuleBase.process_menu called: page={page}")
         try:
             from .logic import Logic
             arg = P.ModelSetting.to_dict()
             
-            if sub is None or sub == 'base':
-                sub = 'setting'
+            if page is None or page == 'base':
+                page = 'setting'
 
-            if sub == 'setting':
-                template_name = f'{P.package_name}_{self.name}_{sub}.html'
+            if page == 'setting':
+                template_name = f'{P.package_name}_{self.name}_{page}.html'
                 arg['is_include'] = F.scheduler.is_include(f'{P.package_name}_auto')
                 arg['is_running'] = F.scheduler.is_running(f'{P.package_name}_auto')
                 
@@ -30,19 +42,19 @@ class ModuleBase(PluginModuleBase):
                 
                 return render_template(template_name, arg=arg, P=P)
 
-            elif sub == 'help':
+            elif page == 'help':
                 template_name = f"{P.package_name}_help.html"
                 return render_template(template_name, arg=arg, P=P)
 
-            elif sub == 'developer':
+            elif page == 'developer':
                 template_name = f"{P.package_name}_base_developer.html"
                 return render_template(template_name, arg=arg, P=P)
 
             else:
-                return f"<div class='container'><h3>알 수 없는 메뉴: {sub}</h3></div>"
+                return f"<div class='container'><h3>알 수 없는 메뉴: {page}</h3></div>"
 
         except Exception as e:
-            P.logger.error(f"Error in menu '{sub}': {str(e)}")
+            P.logger.error(f"Error in menu '{page}': {str(e)}")
             P.logger.error(traceback.format_exc())
             return f"""
             <div class='container'>
