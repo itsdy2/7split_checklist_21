@@ -43,11 +43,17 @@
         <div class="card mb-3">
             <div class="card-header"><strong>전략 설정</strong></div>
             <div class="card-body">
-                {{ macros.setting_select('default_strategy', '기본 실행 전략', 
-                    items=arg.strategy_options, 
-                    value=arg.default_strategy, 
-                    desc=['수동 실행 또는 자동 스케줄링 시 사용할 기본 전략을 선택합니다.']
-                ) }}
+                <div class="form-group">
+                    <label for="default_strategy">기본 실행 전략</label>
+                    <select class="form-control" id="default_strategy" name="default_strategy">
+                        {% for id, name in arg.strategy_options %}
+                        <option value="{{ id }}" {% if arg.default_strategy == id %}selected{% endif %}>{{ name }}</option>
+                        {% endfor %}
+                    </select>
+                    {% for d in ['수동 실행 또는 자동 스케줄링 시 사용할 기본 전략을 선택합니다.'] %}
+                    <small class="form-text text-muted">{{ d }}</small>
+                    {% endfor %}
+                </div>
             </div>
         </div>
 
