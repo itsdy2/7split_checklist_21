@@ -23,7 +23,11 @@ class ModuleBase(PluginModuleBase):
                 template_name = f'{P.package_name}_{self.name}_{sub}.html'
                 arg['is_include'] = F.scheduler.is_include(f'{P.package_name}_auto')
                 arg['is_running'] = F.scheduler.is_running(f'{P.package_name}_auto')
-                arg['strategies'] = Logic.get_strategies_metadata()
+                
+                strategies = Logic.get_strategies_metadata()
+                arg['strategies'] = strategies # Keep for other potential uses in template
+                arg['strategy_options'] = [(s.strategy_id, s.strategy_name) for s in strategies]
+                
                 return render_template(template_name, arg=arg, P=P)
 
             elif sub == 'help':

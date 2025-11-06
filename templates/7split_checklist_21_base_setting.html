@@ -44,7 +44,7 @@
             <div class="card-header"><strong>전략 설정</strong></div>
             <div class="card-body">
                 {{ macros.setting_select('default_strategy', '기본 실행 전략', 
-                    items=[(s.strategy_id, s.strategy_name) for s in arg.strategies], 
+                    items=arg.strategy_options, 
                     value=arg.default_strategy, 
                     desc=['수동 실행 또는 자동 스케줄링 시 사용할 기본 전략을 선택합니다.']
                 ) }}
