@@ -121,11 +121,12 @@ class ModuleScreening(PluginModuleBase):
                 arg['default_strategy'] = P.ModelSetting.get('default_strategy')
                 return render_template(template_name, arg=arg, P=P)
             
-            # NOTE: Scheduler page moved to base module
-            # Redirect to new location
-            from flask import redirect, url_for
-            return redirect(f'/{P.package_name}/base/scheduler')
-            
+            elif page == 'scheduler':
+                # NOTE: Scheduler page moved to base module
+                # Redirect to new location
+                from flask import redirect, url_for
+                return redirect(f'/{P.package_name}/base/scheduler')
+        
             elif page == 'history':
                 page_num = req.args.get('page', 1, type=int)
                 pagination = db.session.query(ScreeningHistory).order_by(ScreeningHistory.execution_date.desc()).paginate(page=page_num, per_page=20, error_out=False)
