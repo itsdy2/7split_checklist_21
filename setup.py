@@ -40,6 +40,14 @@ setting = {
                     { 'uri': 'statistics', 'name': '통계' }
                 ]
             },
+            {
+                'uri': 'trend',
+                'name': '매매동향',
+                'list': [
+                    { 'uri': 'setting', 'name': '설정' },
+                    { 'uri': 'daily', 'name': '전일 기준' }
+                ]
+            },
             { 'uri': 'log', 'name': '로그' }
         ]
         # ^ ^ ^ 수정: 메뉴 리스트 구조 변경 ^ ^ ^
@@ -56,8 +64,9 @@ try:
     
     from .mod_base import ModuleBase
     from .mod_screening import ModuleScreening
+    from .mod_trend import ModuleTrend  # New module for trading trends
     
-    P.set_module_list([ModuleBase, ModuleScreening])
+    P.set_module_list([ModuleBase, ModuleScreening, ModuleTrend])
     
 except Exception as e:
     P.logger.error(f'Exception:{str(e)}')

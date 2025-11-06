@@ -576,6 +576,19 @@ class Logic:
                     )
                     logger.info(f'Scheduled condition {job_id} with cron: {schedule.cron_expression}')
 
+            # 매매 동향 분석 스케줄 (매일 오전 9시 - 장 시작 전)
+            from .trading_trend_analyzer import analyze_trading_trends
+            Job.scheduler.add_job(
+                id=f'{package_name}_trend',
+                func=analyze_trading_trends,
+                trigger='cron',
+                hour=9,
+                minute=0,
+                day_of_week='mon-fri',
+                replace_existing=True
+            )
+            logger.info(f"매매 동향 분석 스케줄 추가: 매일 오전 9시")
+
             # DB 정리 스케줄 (매일 새벽 2시)
             Job.scheduler.add_job(
                 id=f'{package_name}_cleanup',

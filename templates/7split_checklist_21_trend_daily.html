@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h3 class="mb-0"><i class="material-icons">trending_up</i> 전일 매매 동향</h3>
+        <div>
+            <button id="refresh_trend_btn" class="btn btn-outline-primary"><i class="material-icons">refresh</i> 새로고침</button>
+        </div>
+    </div>
+
+    {{ macros.m_hr() }}
+
+    <!-- 기준일자 -->
+    <div class="alert alert-info">
+        <i class="material-icons">info</i> 데이터 기준일: <strong id="analysis_date">{{ arg.analysis_date }}</strong>
+    </div>
+
+    <!-- 연속 수익률 상위 종목 -->
+    {% if arg.results and arg.results.insights %}
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="material-icons">bar_chart</i> 연속 수익률 상위 종목</h5>
+        </div>
+        <div class="card-body">
+            {% for insight in arg.results.insights %}
+            <div class="mb-3">
+                <h6>{{ insight.title }}</h6>
+                <pre class="border p-3 bg-light">{{ insight.data.value if insight.data else "데이터 없음" }}</pre>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- 기간별 순매수 현황 -->
+    {% if arg.results and arg.results.periods_data %}
+    {% for period, data in arg.results.periods_data.items() %}
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="material-icons">show_chart</i> {{ period }} 기관/외국인 순매수</h5>
+            <span class="badge badge-secondary">{{ period }} 기간</span>
+        </div>
+        <div class="card-body">
+            <!-- 기관 순매수 -->
+            <div class="mb-4">
+                <h6><i class="material-icons" style="color: #3498db;">business</i> 기관 순매수 Top {{ data.institutional|length if data.institutional else 0 }}</h6>
+                {% if data.institutional %}
+                <div class="table-responsive">
+                    <table class="table table-sm table-striped">
+                        <thead class="thead-light">
+                            <tr>
+                                <th scope="col">#</th>
+                                {% if arg.trend_show_market_column == 'True' %}
+                                <th scope="col">시장</th>
+                                {% endif %}
+                                <th scope="col">종목명</th>
+                                <th scope="col">현재가</th>
+                                <th scope="col">순매수(억)</th>
+                                <th scope="col">시총비(%)</th>
+                                <th scope="col">수익률(%)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in data.institutional %}
+                            <tr>
+                                <th scope="row">{{ item.rank }}</th>
+                                {% if arg.trend_show_market_column == 'True' %}
+                                <td>{{ item.market }}</td>
+                                {% endif %}
+                                <td>{{ item.name }}</td>
+                                <td class="text-right">{{ item.price }}</td>
+                                <td class="text-right">{{ item.netbuy }}</td>
+                                <td class="text-right">{{ item.cap_ratio }}</td>
+                                <td class="text-right">{{ item.ror }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted">데이터가 없습니다.</p>
+                {% endif %}
+            </div>
+
+            <!-- 외국인 순매수 -->
+            <div>
+                <h6><i class="material-icons" style="color: #e74c3c;">public</i> 외국인 순매수 Top {{ data.foreign|length if data.foreign else 0 }}</h6>
+                {% if data.foreign %}
+                <div class="table-responsive">
+                    <table class="table table-sm table-striped">
+                        <thead class="thead-light">
+                            <tr>
+                                <th scope="col">#</th>
+                                {% if arg.trend_show_market_column == 'True' %}
+                                <th scope="col">시장</th>
+                                {% endif %}
+                                <th scope="col">종목명</th>
+                                <th scope="col">현재가</th>
+                                <th scope="col">순매수(억)</th>
+                                <th scope="col">시총비(%)</th>
+                                <th scope="col">수익률(%)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in data.foreign %}
+                            <tr>
+                                <th scope="row">{{ item.rank }}</th>
+                                {% if arg.trend_show_market_column == 'True' %}
+                                <td>{{ item.market }}</td>
+                                {% endif %}
+                                <td>{{ item.name }}</td>
+                                <td class="text-right">{{ item.price }}</td>
+                                <td class="text-right">{{ item.netbuy }}</td>
+                                <td class="text-right">{{ item.cap_ratio }}</td>
+                                <td class="text-right">{{ item.ror }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted">데이터가 없습니다.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    {% if not arg.results %}
+    <div class="alert alert-warning">
+        <i class="material-icons">warning</i> 현재 표시할 매매 동향 데이터가 없습니다. 새로고침 버튼을 클릭하여 데이터를 불러오세요.
+    </div>
+    {% endif %}
+</div>
+
+<script>
+$(document).ready(function() {
+    // 새로고침 버튼 클릭 이벤트
+    $('#refresh_trend_btn').on('click', function(e) {
+        e.preventDefault();
+        
+        $.ajax({
+            url: '/{{ P.package_name }}/trend/ajax/run_trend_analysis',
+            type: 'POST',
+            success: function(response) {
+                if (response.ret === 'success') {
+                    notify('매매 동향 분석이 완료되었습니다.', 'success');
+                    // 페이지를 새로고침하여 최신 데이터 표시
+                    location.reload();
+                } else {
+                    notify(response.msg, 'warning');
+                }
+            },
+            error: function() {
+                notify('분석 중 오류가 발생했습니다.', 'error');
+            }
+        });
+    });
+});
+</script>
+
+{% endblock %}

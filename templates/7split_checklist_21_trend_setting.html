@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container-fluid">
+    <form id="trend-setting" name="trend-setting">
+        <div class="d-flex justify-content-between align-items-center mb-2" style="position: sticky; top: 0; background: var(--body-bg, #fff); z-index: 2; padding-top: 10px;">
+            <h3 class="mb-0"><i class="material-icons">trending_up</i> 매매 동향 설정</h3>
+            <div>
+                {{ macros.m_button_group([['globalSettingSaveBtn', '설정 저장'], ['run_trend_btn', '수동 실행']]) }}
+            </div>
+        </div>
+
+        {{ macros.m_hr() }}
+
+        <!-- 매매 동향 설정 -->
+        <div class="card mb-3">
+            <div class="card-header"><strong>매매 동향 분석 설정</strong></div>
+            <div class="card-body">
+                {{ macros.setting_input_text('trend_top_n', '상위 N개 종목', value=arg.trend_top_n, desc=['분석에 포함할 상위 종목 수를 입력하세요.']) }}
+                
+                {{ macros.setting_select_sub('trend_market', '분석 시장',
+                    sub=[('ALL', '전체(KOSPI/KOSDAQ/KONEX)'), ('KOSPI', 'KOSPI'), ('KOSDAQ', 'KOSDAQ'), ('KONEX', 'KONEX')],
+                    value=arg.trend_market,
+                    desc=['분석할 시장을 선택하세요.']
+                ) }}
+                
+                {{ macros.setting_checkbox('trend_show_market_column', '시장 구분 열 표시', value=arg.trend_show_market_column, desc=['Discord 알림 및 웹 표시에 시장 구분 열을 포함합니다.']) }}
+                
+                {{ macros.setting_checkbox('trend_send_discord', 'Discord 알림 전송', value=arg.trend_send_discord, desc=['매매 동향 분석 결과를 Discord로 전송합니다.']) }}
+            </div>
+        </div>
+        
+        <!-- 보고서 전송 설정 -->
+        <div class="card mb-3">
+            <div class="card-header"><strong>보고서 전송 설정</strong></div>
+            <div class="card-body">
+                {{ macros.setting_checkbox('trend_send_insight', '연속 수익률 리포트 전송', value=arg.trend_send_insight, desc=['연속 수익률 상위 종목 리포트를 전송합니다.']) }}
+                {{ macros.setting_checkbox('trend_send_1day', '1일 순매수 리포트 전송', value=arg.trend_send_1day, desc=['1일 기준 순매수 리포트를 전송합니다.']) }}
+                {{ macros.setting_checkbox('trend_send_1week', '1주 순매수 리포트 전송', value=arg.trend_send_1week, desc=['1주 기준 순매수 리포트를 전송합니다.']) }}
+                {{ macros.setting_checkbox('trend_send_1month', '1개월 순매수 리포트 전송', value=arg.trend_send_1month, desc=['1개월 기준 순매수 리포트를 전송합니다.']) }}
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+$(document).ready(function() {
+    // 수동 실행 버튼 클릭 이벤트
+    $('#run_trend_btn').on('click', function(e) {
+        e.preventDefault();
+        if (!confirm('매매 동향 분석을 실행하시겠습니까?')) {
+            return;
+        }
+        
+        $.ajax({
+            url: '/{{ P.package_name }}/trend/ajax/manual_run_trend',
+            type: 'POST',
+            success: function(response) {
+                if (response.ret === 'success') {
+                    notify(response.msg, 'success');
+                } else {
+                    notify(response.msg, 'warning');
+                }
+            },
+            error: function() {
+                notify('요청 중 오류가 발생했습니다.', 'error');
+            }
+        });
+    });
+});
+</script>
+
+{% endblock %}
