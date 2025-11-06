@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 from plugin import *
-from .setup import *
+from .setup import P, F
 from framework import db
-from .logic import Logic
 from .model import StockScreeningResult, ScreeningHistory
 from datetime import datetime, timedelta
 from sqlalchemy import func
@@ -13,10 +12,13 @@ import os
 class ModuleScreening(PluginModuleBase):
     def __init__(self, P):
         super(ModuleScreening, self).__init__(P, name='screening', first_menu='strategies')
+        from .logic import Logic
         self.db_default = Logic.db_default
+        self.default_strategy_ids = ['seven_split_21', 'seven_split_mini', 'dividend_strategy', 'value_investing']
         P.logger.info("ModuleScreening initialized")
 
     def process_menu(self, sub, req):
+        from .logic import Logic
         P.logger.info(f"ModuleScreening.process_menu called: sub={sub}")
         arg = P.ModelSetting.to_dict()
         
@@ -62,7 +64,7 @@ class ModuleScreening(PluginModuleBase):
             
             if sub == 'strategies':
                 arg['strategies'] = Logic.get_strategies_metadata()
-                arg['default_strategy'] = Logic.get_setting('default_strategy')
+                arg['default_strategy'] = P.ModelSetting.get('default_strategy')
                 P.logger.info(f"Loaded {len(arg['strategies'])} strategies")
                 return render_template(template_name, arg=arg, P=P)
 
@@ -100,8 +102,7 @@ class ModuleScreening(PluginModuleBase):
                 return render_template(template_name, arg=arg, P=P)
             
             elif sub == 'manual':
-                default_strategy = Logic.get_setting('default_strategy')
-                arg['default_strategy'] = default_strategy
+                arg['default_strategy'] = P.ModelSetting.get('default_strategy')
                 return render_template(template_name, arg=arg, P=P)
             
             elif sub == 'scheduler':
@@ -179,10 +180,11 @@ class ModuleScreening(PluginModuleBase):
     
     # (process_command, process_api는 변경 없음)
     def process_command(self, command, arg1, arg2, arg3, req):
+        from .logic import Logic
         P.logger.info(f"ModuleScreening.process_command: {command}, arg1={arg1}")
         try:
             if command == 'start':
-                strategy_id = arg1 if arg1 else Logic.get_setting('default_strategy')
+                strategy_id = arg1 if arg1 else P.ModelSetting.get('default_strategy')
                 result = Logic.start_screening(strategy_id=strategy_id, execution_type='manual')
                 if result['success']:
                     return jsonify({'ret': 'success', 'msg': '스크리닝이 시작되었습니다.'})
@@ -309,7 +311,7 @@ class {class_name}(BaseStrategy):
 
             elif command == 'delete_strategy':
                 strategy_id = arg1
-                if strategy_id in Logic.default_strategy_ids:
+                if strategy_id in self.default_strategy_ids:
                     return jsonify({'ret': 'error', 'msg': '기본 전략은 삭제할 수 없습니다.'})
                 if not strategy_id.replace('_', '').isalnum():
                     return jsonify({'ret': 'error', 'msg': '잘못된 전략 ID입니다.'})
@@ -384,6 +386,7 @@ class {class_name}(BaseStrategy):
             return jsonify({'ret': 'error', 'msg': str(e)})
 
     def process_ajax(self, sub, req):
+        from .logic import Logic
         try:
             if sub == 'save_schedules':
                 schedules = []
