@@ -186,8 +186,9 @@ function runStrategy(strategyId) {
     }
     
     $.ajax({
-        url: '/{{ P.package_name }}/screening/command/start/' + strategyId,
+        url: '/{{ P.package_name }}/screening/command',
         type: 'POST',
+        data: {cmd: 'start', arg1: strategyId},
         success: function(response) {
             if (response.ret === 'success') {
                 notify(response.msg, 'success');
@@ -207,8 +208,9 @@ function runStrategy(strategyId) {
 // 기본 전략으로 설정
 function setDefaultStrategy(strategyId) {
     $.ajax({
-        url: '/{{ P.package_name }}/screening/command/set_default_strategy/' + strategyId,
+        url: '/{{ P.package_name }}/screening/command',
         type: 'POST',
+        data: {cmd: 'set_default_strategy', arg1: strategyId},
         success: function(response) {
             if (response.ret === 'success') {
                 notify(response.msg, 'success');
@@ -225,7 +227,7 @@ function setDefaultStrategy(strategyId) {
 
 // 전략 내보내기
 function downloadStrategy(strategyId) {
-    location.href = '/{{ P.package_name }}/screening/command/download_strategy/' + strategyId;
+    location.href = '/{{ P.package_name }}/screening/command/download_strategy?arg1=' + strategyId;
 }
 
 // 전략 삭제
@@ -235,8 +237,9 @@ function deleteStrategy(strategyId) {
     }
     
     $.ajax({
-        url: '/{{ P.package_name }}/screening/command/delete_strategy/' + strategyId,
+        url: '/{{ P.package_name }}/screening/command',
         type: 'POST',
+        data: {cmd: 'delete_strategy', arg1: strategyId},
         success: function(response) {
             if (response.ret === 'success') {
                 notify(response.msg, 'success');
@@ -258,8 +261,9 @@ $(document).ready(function() {
 
 function loadRecentHistory() {
     $.ajax({
-        url: '/{{ P.package_name }}/screening/command/recent_history',
+        url: '/{{ P.package_name }}/screening/command',
         type: 'POST',
+        data: {cmd: 'recent_history'},
         success: function(response) {
             if (response.ret === 'success' && response.data.length > 0) {
                 var html = '';

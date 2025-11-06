@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container-fluid">
+  <!-- 전략 스케줄 섹션 -->
+  <div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h5 class="mb-0"><i class="material-icons">schedule</i> 전략 스케줄</h5>
+    </div>
+    <div class="card-body">
+      <form id="schedule_form">
+        <div class="table-responsive">
+          <table class="table table-striped">
+            <thead class="thead-dark">
+              <tr>
+                <th>전략</th>
+                <th>CRON</th>
+                <th>활성</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for s in arg.strategies %}
+              <tr>
+                <td>{{ s.name }} <span class="small text-muted">({{ s.id }})</span></td>
+                <td style="max-width:300px;">
+                  <input type="text" class="form-control form-control-sm" name="cron_{{ s.id }}" id="cron_{{ s.id }}" value="{{ arg.current_schedule[s.id].cron if s.id in arg.current_schedule else '' }}" placeholder="예: 0 9 * * 1-5">
+                </td>
+                <td>
+                  <input type="checkbox" name="enabled_{{ s.id }}" id="enabled_{{ s.id }}" {% if s.id in arg.current_schedule and arg.current_schedule[s.id].enabled %}checked{% endif %}>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </form>
+      <div class="text-right mt-3">
+        <button id="save_schedule_btn" class="btn btn-primary"><i class="material-icons">save</i> 스케줄 저장</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DB 정리 설정 섹션 -->
+  <div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h5 class="mb-0"><i class="material-icons">delete_sweep</i> DB 정리 설정</h5>
+    </div>
+    <div class="card-body">
+      <form id="db_cleanup_form" name="db_cleanup_form">
+        <div class="row">
+          <div class="col-md-6">
+            {{ macros.setting_checkbox('db_cleanup_enabled', 'DB 정리 활성화', value=arg.db_cleanup_enabled, desc=['정기적으로 오래된 데이터를 삭제합니다.']) }}
+          </div>
+          <div class="col-md-6">
+            {{ macros.setting_input_text('db_retention_days', '데이터 보관 기간(일)', value=arg.db_retention_days, desc=['이 기간이 지난 데이터는 자동으로 삭제됩니다.']) }}
+          </div>
+        </div>
+        <div class="row mt-3">
+          <div class="col-md-6">
+            {{ macros.setting_input_text('db_max_size_gb', 'DB 최대 크기(GB)', value=arg.db_max_size_gb, desc=['DB 크기가 이 값을 초과하면 정리가 수행됩니다.']) }}
+          </div>
+        </div>
+      </form>
+      <div class="text-right mt-3">
+        <button id="save_cleanup_btn" class="btn btn-primary"><i class="material-icons">save</i> DB 정리 설정 저장</button>
+        <button id="manual_cleanup_btn" class="btn btn-warning"><i class="material-icons">delete</i> 수동 DB 정리 실행</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// 전략 스케줄 저장
+$('#save_schedule_btn').on('click', function(){
+  var form = $('#schedule_form');
+  var formData = form.serialize();
+
+  $.ajax({
+    url: '/ajax/{{ P.package_name }}/screening/save_schedules',
+    type: 'POST',
+    data: formData,
+    success: function(res){
+      if (res.ret === 'success') notify(res.msg, 'success');
+      else notify(res.msg || '저장 실패', 'error');
+    },
+    error: function(){ notify('요청 실패', 'error'); }
+  });
+});
+
+// DB 정리 설정 저장
+$('#save_cleanup_btn').on('click', function(){
+  var form = $('#db_cleanup_form');
+  var formData = form.serialize();
+
+  $.ajax({
+    url: '/ajax/{{ P.package_name }}/setting_save',
+    type: 'POST',
+    data: formData,
+    success: function(res){
+      if (res.ret === 'success') notify('DB 정리 설정이 저장되었습니다.', 'success');
+      else notify(res.msg || '저장 실패', 'error');
+    },
+    error: function(){ notify('요청 실패', 'error'); }
+  });
+});
+
+// 수동 DB 정리 실행
+$('#manual_cleanup_btn').on('click', function(){
+  if (!confirm('DB 정리를 실행하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
+    return;
+  }
+
+  $.ajax({
+    url: '/ajax/{{ P.package_name }}/base/manual_cleanup',
+    type: 'POST',
+    success: function(res){
+      if (res.ret === 'success') {
+        notify(res.msg, 'success');
+      } else {
+        notify(res.msg || 'DB 정리 실패', 'error');
+      }
+    },
+    error: function(){ 
+      notify('DB 정리 요청 실패', 'error'); 
+    }
+  });
+});
+</script>
+
+{% endblock %}

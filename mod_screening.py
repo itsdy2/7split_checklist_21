@@ -20,6 +20,9 @@ class ModuleScreening(PluginModuleBase):
         'notification_discord': 'True',
         'use_multiprocessing': 'False',
         'screening_interval_days': '1',
+        'db_retention_days': '30',
+        'db_cleanup_enabled': 'True',
+        'db_max_size_gb': '5',
         # ... (기존 db_default 내용과 동일)
     }
 
@@ -118,19 +121,10 @@ class ModuleScreening(PluginModuleBase):
                 arg['default_strategy'] = P.ModelSetting.get('default_strategy')
                 return render_template(template_name, arg=arg, P=P)
             
-            elif page == 'scheduler':
-                # 전략 수준 스케줄 관리 (ConditionSchedule.condition_number = 0 사용)
-                from .model import ConditionSchedule
-                strategies = Logic.get_strategies_metadata()
-                # 현 설정 읽기
-                current = {s['id']: {'enabled': False, 'cron': ''} for s in strategies}
-                rows = db.session.query(ConditionSchedule).filter(ConditionSchedule.condition_number == 0).all()
-                for r in rows:
-                    if r.strategy_id in current:
-                        current[r.strategy_id] = {'enabled': r.is_enabled, 'cron': r.cron_expression}
-                arg['strategies'] = strategies
-                arg['current_schedule'] = current
-                return render_template(template_name, arg=arg, P=P)
+            # NOTE: Scheduler page moved to base module
+            # Redirect to new location
+            from flask import redirect, url_for
+            return redirect(f'/{P.package_name}/base/scheduler')
             
             elif page == 'history':
                 page_num = req.args.get('page', 1, type=int)
@@ -430,3 +424,21 @@ class {class_name}(BaseStrategy):
             P.logger.error(f"AJAX error: {str(e)}")
             P.logger.error(traceback.format_exc())
             return jsonify({'ret': 'error', 'msg': str(e)})
+
+    def get_scheduler_interval(self):
+        """스케줄러 간격을 분 단위로 반환"""
+        try:
+            # 모듈명_interval 키로 설정된 간격 가져오기 (예: screening_interval)
+            interval = P.ModelSetting.get(f'{self.name}_interval')
+            if interval and interval != 'None' and interval.strip() != '':
+                return int(interval)
+            else:
+                # 기본값: 60분
+                return 60
+        except (ValueError, TypeError):
+            # 변환 실패 시 기본값 반환
+            return 60
+
+    def get_scheduler_desc(self):
+        """스케줄러 설명 반환"""
+        return f"{self.name} 모듈 스케줄러"

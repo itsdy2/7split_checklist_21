@@ -54,6 +54,74 @@ class Logic:
             return Logic.task_start_screening(strategy_id, execution_type)
 
     @staticmethod
+    def cleanup_old_data():
+        """오래된 데이터 정리"""
+        from .setup import PluginModelSetting
+        from .model import StockScreeningResult, ScreeningHistory, FilterDetail
+        from datetime import datetime, timedelta
+        import os
+
+        try:
+            # 설정 가져오기
+            retention_days = int(PluginModelSetting.get('db_retention_days', 30))
+            cleanup_enabled = PluginModelSetting.get('db_cleanup_enabled', 'True') == 'True'
+            
+            if not cleanup_enabled:
+                logger.info("DB 정리가 비활성화되어 있습니다.")
+                return {'success': True, 'message': 'DB 정리가 비활성화되어 있습니다.'}
+                
+            cutoff_date = datetime.now().date() - timedelta(days=retention_days)
+            
+            # StockScreeningResult 정리
+            old_results_count = db.session.query(StockScreeningResult).filter(
+                StockScreeningResult.screening_date < cutoff_date
+            ).count()
+            old_results_deleted = db.session.query(StockScreeningResult).filter(
+                StockScreeningResult.screening_date < cutoff_date
+            ).delete()
+            
+            # ScreeningHistory 정리
+            old_histories_count = db.session.query(ScreeningHistory).filter(
+                ScreeningHistory.execution_date < cutoff_date
+            ).count()
+            old_histories_deleted = db.session.query(ScreeningHistory).filter(
+                ScreeningHistory.execution_date < cutoff_date
+            ).delete()
+            
+            # FilterDetail 정리
+            old_details_count = db.session.query(FilterDetail).filter(
+                FilterDetail.created_at < cutoff_date
+            ).count()
+            old_details_deleted = db.session.query(FilterDetail).filter(
+                FilterDetail.created_at < cutoff_date
+            ).delete()
+            
+            db.session.commit()
+            
+            logger.info(f"DB 정리 완료: {old_results_deleted}개 결과, {old_histories_deleted}개 이력, {old_details_deleted}개 필터 상세 삭제됨")
+            
+            return {
+                'success': True, 
+                'message': f'{retention_days}일 이상된 {old_results_deleted}개 결과, {old_histories_deleted}개 이력, {old_details_deleted}개 필터 상세 삭제됨',
+                'deleted': {
+                    'results': old_results_deleted,
+                    'histories': old_histories_deleted,
+                    'details': old_details_deleted
+                }
+            }
+                
+        except Exception as e:
+            logger.error(f"DB 정리 오류: {str(e)}")
+            db.session.rollback()
+            return {'success': False, 'message': f'DB 정리 오류: {str(e)}'}
+
+    @staticmethod
+    @celery.task(bind=True)
+    def task_cleanup_old_data(self):
+        """Celery 작업으로 오래된 데이터 정리"""
+        return Logic.cleanup_old_data()
+
+    @staticmethod
     @celery.task(bind=True)
     def task_start_screening(self, strategy_id=None, execution_type='manual'):
         """
@@ -507,6 +575,17 @@ class Logic:
                         **cron_to_dict(schedule.cron_expression)
                     )
                     logger.info(f'Scheduled condition {job_id} with cron: {schedule.cron_expression}')
+
+            # DB 정리 스케줄 (매일 새벽 2시)
+            Job.scheduler.add_job(
+                id=f'{package_name}_cleanup',
+                func=Logic.task_cleanup_old_data if F.config['use_celery'] else Logic.cleanup_old_data,
+                trigger='cron',
+                hour=2,
+                minute=0,
+                replace_existing=True
+            )
+            logger.info(f"DB 정리 스케줄 추가: 매일 오전 2시")
 
         except Exception as e:
             logger.error(f"Scheduler start error: {str(e)}")
