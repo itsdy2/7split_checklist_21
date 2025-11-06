@@ -70,8 +70,10 @@ class Logic:
 
         try:
             # 설정 가져오기
-            retention_days = int(PluginModelSetting.get('db_retention_days', 30))
-            cleanup_enabled = PluginModelSetting.get('db_cleanup_enabled', 'True') == 'True'
+            retention_days_str = PluginModelSetting.get('db_retention_days') or '30'
+            retention_days = int(retention_days_str)
+            cleanup_enabled_str = PluginModelSetting.get('db_cleanup_enabled') or 'True'
+            cleanup_enabled = cleanup_enabled_str == 'True'
             
             if not cleanup_enabled:
                 logger.info("DB 정리가 비활성화되어 있습니다.")

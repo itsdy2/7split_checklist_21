@@ -1,0 +1,285 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h3 class="mb-0"><i class="material-icons">trending_up</i> 백테스트 실행</h3>
+    </div>
+
+    {{ macros.m_hr() }}
+
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="material-icons">settings</i> 백테스트 설정</h5>
+                </div>
+                <div class="card-body">
+                    <form id="backtest-form">
+                        <div class="form-group">
+                            <label for="strategy-select">전략 선택</label>
+                            <select class="form-control" id="strategy-select" name="strategy_id">
+                                {% for strategy in arg.strategies %}
+                                <option value="{{ strategy.id }}" {% if strategy.id == arg.default_strategy %}selected{% endif %}>{{ strategy.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="start-date">시작 날짜</label>
+                            <input type="date" class="form-control" id="start-date" name="start_date" value="{{ arg.backtest_start_date }}">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="end-date">종료 날짜</label>
+                            <input type="date" class="form-control" id="end-date" name="end_date" value="{{ arg.backtest_end_date }}">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="initial-capital">초기 자본 (원)</label>
+                            <input type="number" class="form-control" id="initial-capital" name="initial_capital" value="{{ arg.backtest_initial_capital }}">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="rebalance-interval">리밸런싱 주기</label>
+                            <select class="form-control" id="rebalance-interval" name="rebalance_interval">
+                                <option value="daily" {% if arg.backtest_rebalance_interval == 'daily' %}selected{% endif %}>일간</option>
+                                <option value="weekly" {% if arg.backtest_rebalance_interval == 'weekly' %}selected{% endif %}>주간</option>
+                                <option value="monthly" {% if arg.backtest_rebalance_interval == 'monthly' %}selected{% endif %}>월간</option>
+                                <option value="quarterly" {% if arg.backtest_rebalance_interval == 'quarterly' %}selected{% endif %}>분기</option>
+                            </select>
+                        </div>
+                        
+                        <button type="button" id="run-backtest-btn" class="btn btn-primary btn-block">
+                            <i class="material-icons">play_arrow</i> 백테스트 실행
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="material-icons">analytics</i> 백테스트 결과</h5>
+                    <div id="result-status" class="badge badge-secondary">대기중</div>
+                </div>
+                <div class="card-body">
+                    <div id="backtest-result-container" style="display: none;">
+                        <div class="row mb-4">
+                            <div class="col-md-3">
+                                <div class="card bg-primary text-white">
+                                    <div class="card-body text-center">
+                                        <h6>총 수익률</h6>
+                                        <h4 id="total-return-value">0.00%</h4>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-success text-white">
+                                    <div class="card-body text-center">
+                                        <h6>CAGR</h6>
+                                        <h4 id="cagr-value">0.00%</h4>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-info text-white">
+                                    <div class="card-body text-center">
+                                        <h6>샤프비율</h6>
+                                        <h4 id="sharpe-value">0.00</h4>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-warning text-dark">
+                                    <div class="card-body text-center">
+                                        <h6>최종 가치</h6>
+                                        <h4 id="final-value">0원</h4>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>지표</th>
+                                        <th>값</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>전략</td>
+                                        <td id="result-strategy-name">-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>기간</td>
+                                        <td id="result-period">-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>초기 자본</td>
+                                        <td id="result-initial-capital">-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>연간 변동성</td>
+                                        <td id="result-volatility">-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>최대 낙폭</td>
+                                        <td id="result-max-drawdown">-</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div id="performance-chart-container" class="mt-4">
+                            <canvas id="performance-chart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div id="backtest-instruction" class="text-center text-muted">
+                        <i class="material-icons" style="font-size: 48px;">trending_up</i>
+                        <p class="mt-2">좌측 설정에서 백테스트 조건을 입력하고 '백테스트 실행' 버튼을 클릭하세요.</p>
+                        <p class="small">백테스트는 과거 데이터를 기반으로 전략의 성능을 평가합니다.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+let performanceChart = null;
+
+$('#run-backtest-btn').on('click', function() {
+    const formData = {
+        strategy_id: $('#strategy-select').val(),
+        start_date: $('#start-date').val(),
+        end_date: $('#end-date').val(),
+        initial_capital: $('#initial-capital').val(),
+        rebalance_interval: $('#rebalance-interval').val()
+    };
+    
+    if (!formData.strategy_id) {
+        notify('전략을 선택해주세요.', 'warning');
+        return;
+    }
+    
+    if (!formData.start_date || !formData.end_date) {
+        notify('시작 및 종료 날짜를 입력해주세요.', 'warning');
+        return;
+    }
+    
+    if (new Date(formData.start_date) >= new Date(formData.end_date)) {
+        notify('시작 날짜는 종료 날짜보다 이전이어야 합니다.', 'warning');
+        return;
+    }
+    
+    // 버튼 비활성화 및 로딩 상태 표시
+    const originalText = $(this).html();
+    $(this).html('<span class="spinner-border spinner-border-sm mr-2" role="status" aria-hidden="true"></span> 실행 중...').prop('disabled', true);
+    $('#result-status').removeClass('badge-secondary').addClass('badge-warning').text('실행 중');
+    
+    $.ajax({
+        url: '/{{ P.package_name }}/backtesting/ajax/run_backtest',
+        type: 'POST',
+        data: formData,
+        success: function(response) {
+            if (response.ret === 'success') {
+                notify('백테스트가 완료되었습니다.', 'success');
+                displayBacktestResults(response.data);
+                $('#result-status').removeClass('badge-warning').addClass('badge-success').text('완료');
+            } else {
+                notify('백테스트 실패: ' + response.msg, 'error');
+                $('#result-status').removeClass('badge-warning').addClass('badge-danger').text('실패');
+            }
+        },
+        error: function(xhr, status, error) {
+            notify('백테스트 중 오류 발생: ' + error, 'error');
+            $('#result-status').removeClass('badge-warning').addClass('badge-danger').text('오류');
+        },
+        complete: function() {
+            // 버튼 활성화
+            $('#run-backtest-btn').html(originalText).prop('disabled', false);
+        }
+    });
+});
+
+function displayBacktestResults(data) {
+    // 결과 표시
+    $('#backtest-instruction').hide();
+    $('#backtest-result-container').show();
+    
+    // 성과 지표 표시
+    const metrics = data.performance_metrics;
+    $('#total-return-value').text((metrics.total_return || 0) + '%');
+    $('#cagr-value').text((metrics.cagr || 0) + '%');
+    $('#sharpe-value').text((metrics.sharpe_ratio || 0).toFixed(2));
+    $('#final-value').text((metrics.final_value || 0).toLocaleString() + '원');
+    
+    $('#result-strategy-name').text(data.strategy_name);
+    $('#result-period').text(data.start_date + ' ~ ' + data.end_date);
+    $('#result-initial-capital').text(parseInt(data.initial_capital).toLocaleString() + '원');
+    $('#result-volatility').text((metrics.annual_volatility || 0).toFixed(2) + '%');
+    $('#result-max-drawdown').text((metrics.max_drawdown || 0).toFixed(2) + '%');
+    
+    // 성과 차트 생성
+    createPerformanceChart(data);
+}
+
+function createPerformanceChart(data) {
+    // 기존 차트가 있다면 파괴
+    if (performanceChart) {
+        performanceChart.destroy();
+    }
+    
+    const ctx = document.getElementById('performance-chart').getContext('2d');
+    
+    // 날짜와 가치 데이터 준비
+    const dates = data.portfolio_values.map(item => item.date);
+    const values = data.portfolio_values.map(item => item.value);
+    
+    performanceChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: dates,
+            datasets: [{
+                label: '포트폴리오 가치',
+                data: values,
+                borderColor: 'rgb(75, 192, 192)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                tension: 0.1,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: false,
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString() + '원';
+                        }
+                    }
+                }
+            },
+            plugins: {
+                title: {
+                    display: true,
+                    text: '포트폴리오 가치 변화'
+                }
+            }
+        }
+    });
+    
+    // 차트 컨테이너 높이 설정
+    $('#performance-chart-container').height(400);
+}
+</script>
+
+{% endblock %}

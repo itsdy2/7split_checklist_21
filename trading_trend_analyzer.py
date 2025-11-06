@@ -333,21 +333,28 @@ def analyze_trading_trends(market=None, top_n=None, send_discord=None, show_mark
     
     # Use plugin settings if parameters are not provided
     if market is None:
-        market = PluginModelSetting.get('trend_market', 'ALL')
+        market = PluginModelSetting.get('trend_market') or 'ALL'
     if top_n is None:
-        top_n = int(PluginModelSetting.get('trend_top_n', '30'))
+        top_n_str = PluginModelSetting.get('trend_top_n') or '30'
+        top_n = int(top_n_str)
     if send_discord is None:
-        send_discord = PluginModelSetting.get('trend_send_discord', 'True') == 'True'
+        send_discord_str = PluginModelSetting.get('trend_send_discord') or 'True'
+        send_discord = send_discord_str == 'True'
     if show_market_column is None:
-        show_market_column = PluginModelSetting.get('trend_show_market_column', 'True') == 'True'
+        show_market_column_str = PluginModelSetting.get('trend_show_market_column') or 'True'
+        show_market_column = show_market_column_str == 'True'
     if send_insight is None:
-        send_insight = PluginModelSetting.get('trend_send_insight', 'True') == 'True'
+        send_insight_str = PluginModelSetting.get('trend_send_insight') or 'True'
+        send_insight = send_insight_str == 'True'
     if send_1day is None:
-        send_1day = PluginModelSetting.get('trend_send_1day', 'True') == 'True'
+        send_1day_str = PluginModelSetting.get('trend_send_1day') or 'True'
+        send_1day = send_1day_str == 'True'
     if send_1week is None:
-        send_1week = PluginModelSetting.get('trend_send_1week', 'True') == 'True'
+        send_1week_str = PluginModelSetting.get('trend_send_1week') or 'True'
+        send_1week = send_1week_str == 'True'
     if send_1month is None:
-        send_1month = PluginModelSetting.get('trend_send_1month', 'True') == 'True'
+        send_1month_str = PluginModelSetting.get('trend_send_1month') or 'True'
+        send_1month = send_1month_str == 'True'
     """
     Main function to analyze trading trends
     """
@@ -413,7 +420,7 @@ def analyze_trading_trends(market=None, top_n=None, send_discord=None, show_mark
                 
                 if send_discord:
                     send_to_discord(
-                        webhook_url=PluginModelSetting.get('discord_webhook_url', ''),
+                        webhook_url=PluginModelSetting.get('discord_webhook_url') or '',
                         embed_fields=[ror_insight_field],
                         title=insight_title,
                         footer_text=insight_footer
@@ -506,7 +513,7 @@ def analyze_trading_trends(market=None, top_n=None, send_discord=None, show_mark
                 period_footer = f"pykrx analysis bot | Period: {start_date_str} ~ {end_date_str}"
                 
                 send_to_discord(
-                    webhook_url=PluginModelSetting.get('discord_webhook_url', ''),
+                    webhook_url=PluginModelSetting.get('discord_webhook_url') or '',
                     embed_fields=period_embed_fields,
                     title=period_title,
                     footer_text=period_footer
@@ -527,7 +534,7 @@ def analyze_trading_trends(market=None, top_n=None, send_discord=None, show_mark
             error_title = "🚨 Script execution error"
             error_footer = f"Time: {datetime.now().isoformat()}"
             error_field = [{"name": "Error details", "value": f"```\n{e}\n```", "inline": False}]
-            send_to_discord(PluginModelSetting.get('discord_webhook_url', ''), error_field, error_title, error_footer)
+            send_to_discord(PluginModelSetting.get('discord_webhook_url') or '', error_field, error_title, error_footer)
         except:
             pass
         return None

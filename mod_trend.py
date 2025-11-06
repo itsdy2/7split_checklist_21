@@ -59,10 +59,12 @@ class ModuleTrend(PluginModuleBase):
                 end_date_str = stock.get_nearest_business_day_in_a_week(today_str)
                 end_date_obj = datetime.strptime(end_date_str, "%Y%m%d")
                 
-                # Get settings
-                market = P.ModelSetting.get('trend_market', 'ALL')
-                top_n = int(P.ModelSetting.get('trend_top_n', '30'))
-                show_market_column = P.ModelSetting.get('trend_show_market_column', 'True') == 'True'
+                # Get settings with default values
+                market = P.ModelSetting.get('trend_market') or 'ALL'
+                top_n_str = P.ModelSetting.get('trend_top_n') or '30'
+                top_n = int(top_n_str)
+                show_market_column_str = P.ModelSetting.get('trend_show_market_column') or 'True'
+                show_market_column = show_market_column_str == 'True'
                 
                 # Perform analysis
                 results = analyze_trading_trends(
@@ -70,10 +72,10 @@ class ModuleTrend(PluginModuleBase):
                     top_n=top_n,
                     send_discord=False,  # Don't send to Discord from web view
                     show_market_column=show_market_column,
-                    send_insight=P.ModelSetting.get('trend_send_insight', 'True') == 'True',
-                    send_1day=P.ModelSetting.get('trend_send_1day', 'True') == 'True',
-                    send_1week=P.ModelSetting.get('trend_send_1week', 'True') == 'True',
-                    send_1month=P.ModelSetting.get('trend_send_1month', 'True') == 'True'
+                    send_insight=(P.ModelSetting.get('trend_send_insight') or 'True') == 'True',
+                    send_1day=(P.ModelSetting.get('trend_send_1day') or 'True') == 'True',
+                    send_1week=(P.ModelSetting.get('trend_send_1week') or 'True') == 'True',
+                    send_1month=(P.ModelSetting.get('trend_send_1month') or 'True') == 'True'
                 )
                 
                 arg['analysis_date'] = end_date_obj.strftime('%Y-%m-%d')
@@ -100,10 +102,13 @@ class ModuleTrend(PluginModuleBase):
         try:
             if sub == 'run_trend_analysis':
                 # Get settings
-                market = P.ModelSetting.get('trend_market', 'ALL')
-                top_n = int(P.ModelSetting.get('trend_top_n', '30'))
-                send_discord = P.ModelSetting.get('trend_send_discord', 'True') == 'True'
-                show_market_column = P.ModelSetting.get('trend_show_market_column', 'True') == 'True'
+                market = P.ModelSetting.get('trend_market') or 'ALL'
+                top_n_str = P.ModelSetting.get('trend_top_n') or '30'
+                top_n = int(top_n_str)
+                send_discord_str = P.ModelSetting.get('trend_send_discord') or 'True'
+                send_discord = send_discord_str == 'True'
+                show_market_column_str = P.ModelSetting.get('trend_show_market_column') or 'True'
+                show_market_column = show_market_column_str == 'True'
                 
                 # Perform analysis
                 results = analyze_trading_trends(
@@ -111,10 +116,10 @@ class ModuleTrend(PluginModuleBase):
                     top_n=top_n,
                     send_discord=send_discord,
                     show_market_column=show_market_column,
-                    send_insight=P.ModelSetting.get('trend_send_insight', 'True') == 'True',
-                    send_1day=P.ModelSetting.get('trend_send_1day', 'True') == 'True',
-                    send_1week=P.ModelSetting.get('trend_send_1week', 'True') == 'True',
-                    send_1month=P.ModelSetting.get('trend_send_1month', 'True') == 'True'
+                    send_insight=(P.ModelSetting.get('trend_send_insight') or 'True') == 'True',
+                    send_1day=(P.ModelSetting.get('trend_send_1day') or 'True') == 'True',
+                    send_1week=(P.ModelSetting.get('trend_send_1week') or 'True') == 'True',
+                    send_1month=(P.ModelSetting.get('trend_send_1month') or 'True') == 'True'
                 )
                 
                 if results:
@@ -126,26 +131,30 @@ class ModuleTrend(PluginModuleBase):
                 # Run trend analysis with default parameters, sending to Discord
                 from .setup import PluginModelSetting
                 
-                market = PluginModelSetting.get('trend_market', 'ALL')
-                top_n = int(PluginModelSetting.get('trend_top_n', '30'))
-                send_discord = PluginModelSetting.get('trend_send_discord', 'True') == 'True'
-                show_market_column = PluginModelSetting.get('trend_show_market_column', 'True') == 'True'
+                market = PluginModelSetting.get('trend_market') or 'ALL'
+                top_n_str = PluginModelSetting.get('trend_top_n') or '30'
+                top_n = int(top_n_str)
+                send_discord_str = PluginModelSetting.get('trend_send_discord') or 'True'
+                send_discord = send_discord_str == 'True'
+                show_market_column_str = PluginModelSetting.get('trend_show_market_column') or 'True'
+                show_market_column = show_market_column_str == 'True'
                 
                 results = analyze_trading_trends(
                     market=market,
                     top_n=top_n,
                     send_discord=send_discord,
                     show_market_column=show_market_column,
-                    send_insight=PluginModelSetting.get('trend_send_insight', 'True') == 'True',
-                    send_1day=PluginModelSetting.get('trend_send_1day', 'True') == 'True',
-                    send_1week=PluginModelSetting.get('trend_send_1week', 'True') == 'True',
-                    send_1month=PluginModelSetting.get('trend_send_1month', 'True') == 'True'
+                    send_insight=(PluginModelSetting.get('trend_send_insight') or 'True') == 'True',
+                    send_1day=(PluginModelSetting.get('trend_send_1day') or 'True') == 'True',
+                    send_1week=(PluginModelSetting.get('trend_send_1week') or 'True') == 'True',
+                    send_1month=(PluginModelSetting.get('trend_send_1month') or 'True') == 'True'
                 )
                 
                 if results:
                     # Send notification if enabled
-                    if PluginModelSetting.get('notification_discord') == 'True':
-                        webhook_url = PluginModelSetting.get('discord_webhook_url')
+                    notification_discord_str = PluginModelSetting.get('notification_discord') or 'False'
+                    if notification_discord_str == 'True':
+                        webhook_url = PluginModelSetting.get('discord_webhook_url') or ''
                         notifier = Notifier(webhook_url=webhook_url)
                         notifier.send_screening_result(
                             [], 0, 0, f"매매동향_{results['date']}"  # Pass empty results for this notification
@@ -183,24 +192,33 @@ class ModuleTrend(PluginModuleBase):
         P.logger.info("Trend module scheduler executed")
         try:
             # Only run if auto-start is enabled
-            if P.ModelSetting.get('auto_start', 'False') == 'True':
+            auto_start_str = P.ModelSetting.get('auto_start') or 'False'
+            if auto_start_str == 'True':
                 # Trigger the analysis
                 from .setup import PluginModelSetting
                 
-                market = PluginModelSetting.get('trend_market', 'ALL')
-                top_n = int(PluginModelSetting.get('trend_top_n', '30'))
-                send_discord = PluginModelSetting.get('trend_send_discord', 'True') == 'True'
-                show_market_column = PluginModelSetting.get('trend_show_market_column', 'True') == 'True'
+                market = PluginModelSetting.get('trend_market') or 'ALL'
+                top_n_str = PluginModelSetting.get('trend_top_n') or '30'
+                top_n = int(top_n_str)
+                send_discord_str = PluginModelSetting.get('trend_send_discord') or 'True'
+                send_discord = send_discord_str == 'True'
+                show_market_column_str = PluginModelSetting.get('trend_show_market_column') or 'True'
+                show_market_column = show_market_column_str == 'True'
+                
+                send_insight_str = (PluginModelSetting.get('trend_send_insight') or 'True') == 'True'
+                send_1day_str = (PluginModelSetting.get('trend_send_1day') or 'True') == 'True'
+                send_1week_str = (PluginModelSetting.get('trend_send_1week') or 'True') == 'True'
+                send_1month_str = (PluginModelSetting.get('trend_send_1month') or 'True') == 'True'
                 
                 results = analyze_trading_trends(
                     market=market,
                     top_n=top_n,
                     send_discord=send_discord,
                     show_market_column=show_market_column,
-                    send_insight=PluginModelSetting.get('trend_send_insight', 'True') == 'True',
-                    send_1day=PluginModelSetting.get('trend_send_1day', 'True') == 'True',
-                    send_1week=PluginModelSetting.get('trend_send_1week', 'True') == 'True',
-                    send_1month=PluginModelSetting.get('trend_send_1month', 'True') == 'True'
+                    send_insight=send_insight_str,
+                    send_1day=send_1day_str,
+                    send_1week=send_1week_str,
+                    send_1month=send_1month_str
                 )
                 
                 if results:

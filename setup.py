@@ -48,6 +48,14 @@ setting = {
                     { 'uri': 'daily', 'name': '전일 기준' }
                 ]
             },
+            {
+                'uri': 'backtesting',
+                'name': '백테스팅',
+                'list': [
+                    { 'uri': 'backtest', 'name': '백테스트' },
+                    { 'uri': 'history', 'name': '이력' }
+                ]
+            },
             { 'uri': 'log', 'name': '로그' }
         ]
         # ^ ^ ^ 수정: 메뉴 리스트 구조 변경 ^ ^ ^
@@ -65,8 +73,9 @@ try:
     from .mod_base import ModuleBase
     from .mod_screening import ModuleScreening
     from .mod_trend import ModuleTrend  # New module for trading trends
+    from .mod_backtesting import ModuleBacktesting  # New module for backtesting
     
-    P.set_module_list([ModuleBase, ModuleScreening, ModuleTrend])
+    P.set_module_list([ModuleBase, ModuleScreening, ModuleTrend, ModuleBacktesting])
     
 except Exception as e:
     P.logger.error(f'Exception:{str(e)}')
