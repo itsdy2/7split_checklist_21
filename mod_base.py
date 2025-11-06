@@ -1,18 +1,19 @@
 # -*- coding: utf-8 -*-
 import traceback
 from plugin import *
-from .setup import *
-from .logic import Logic
+from .setup import P, F
 
 class ModuleBase(PluginModuleBase):
     def __init__(self, P):
         super(ModuleBase, self).__init__(P, name='base', first_menu='setting')
+        from .logic import Logic
         self.db_default = Logic.db_default
         P.logger.info("ModuleBase initialized")
 
     def process_menu(self, sub, req):
         P.logger.info(f"ModuleBase.process_menu called: sub={sub}")
         try:
+            from .logic import Logic
             arg = P.ModelSetting.to_dict()
             
             if sub is None or sub == 'base':
@@ -61,9 +62,11 @@ class ModuleBase(PluginModuleBase):
             return jsonify({'ret': 'error', 'msg': str(e)})
 
     def setting_save_after(self, change_list):
+        from .logic import Logic
         if 'auto_start' in change_list or 'screening_time' in change_list:
             P.logger.info("스케줄러 관련 설정이 변경되어 스케줄러를 재시작합니다.")
             Logic.task_scheduler_restart.apply_async()
 
     def scheduler_function(self):
+        from .logic import Logic
         Logic.scheduler_start()
