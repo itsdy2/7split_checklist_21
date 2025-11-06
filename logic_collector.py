@@ -42,10 +42,12 @@ class DataCollector:
         
         if dart_api_key and odr:
             try:
+                logger.info(f"Attempting to initialize OpenDartReader with API key: {'*' * len(dart_api_key) if dart_api_key else 'None'}")
                 self.dart = odr.OpenDartReader(dart_api_key)
                 logger.info("OpenDartReader initialized successfully")
             except Exception as e:
                 logger.error(f"OpenDartReader initialization failed: {str(e)}")
+                logger.error(traceback.format_exc())
     
     
     def get_all_tickers(self):
@@ -55,10 +57,12 @@ class DataCollector:
         Returns:
             list: [{code, name, market, sector, status}, ...]
         """
+        logger.info("Starting to collect all tickers...")
         tickers = []
         
         try:
             if fdr:
+                logger.debug("Using FDR to collect tickers...")
                 df_krx = fdr.StockListing('KRX')
                 
                 for _, row in df_krx.iterrows():
@@ -73,6 +77,7 @@ class DataCollector:
                 logger.info(f"Total tickers collected via FDR: {len(tickers)}")
                 
             elif pykrx_stock:
+                logger.debug("Using pykrx to collect tickers...")
                 today = datetime.now().strftime('%Y%m%d')
                 
                 kospi_tickers = pykrx_stock.get_market_ticker_list(today, market='KOSPI')
@@ -99,11 +104,15 @@ class DataCollector:
                     })
                 
                 logger.info(f"Total tickers collected via pykrx: {len(tickers)}")
+            else:
+                logger.warning("Neither FDR nor pykrx_stock is available for ticker collection")
             
+            logger.info(f"Final ticker count: {len(tickers)}")
             return tickers
             
         except (requests.exceptions.RequestException, ValueError) as e:
             logger.error(f"Failed to get tickers: {str(e)}")
+            logger.error(traceback.format_exc())
             return []
     
     

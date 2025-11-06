@@ -18,11 +18,16 @@
             <div class="card-body">
                 {{ macros.setting_input_text('trend_top_n', '상위 N개 종목', value=arg.trend_top_n, desc=['분석에 포함할 상위 종목 수를 입력하세요.']) }}
                 
-                {{ macros.setting_select_sub('trend_market', '분석 시장',
-                    sub=[('ALL', '전체(KOSPI/KOSDAQ/KONEX)'), ('KOSPI', 'KOSPI'), ('KOSDAQ', 'KOSDAQ'), ('KONEX', 'KONEX')],
-                    value=arg.trend_market,
-                    desc=['분석할 시장을 선택하세요.']
-                ) }}
+                <div class="form-group">
+                    <label for="trend_market">분석 시장</label>
+                    <select class="form-control" id="trend_market" name="trend_market">
+                        <option value="ALL" {% if arg.trend_market == 'ALL' %}selected{% endif %}>전체(KOSPI/KOSDAQ/KONEX)</option>
+                        <option value="KOSPI" {% if arg.trend_market == 'KOSPI' %}selected{% endif %}>KOSPI</option>
+                        <option value="KOSDAQ" {% if arg.trend_market == 'KOSDAQ' %}selected{% endif %}>KOSDAQ</option>
+                        <option value="KONEX" {% if arg.trend_market == 'KONEX' %}selected{% endif %}>KONEX</option>
+                    </select>
+                    <small class="form-text text-muted">분석할 시장을 선택하세요.</small>
+                </div>
                 
                 {{ macros.setting_checkbox('trend_show_market_column', '시장 구분 열 표시', value=arg.trend_show_market_column, desc=['Discord 알림 및 웹 표시에 시장 구분 열을 포함합니다.']) }}
                 

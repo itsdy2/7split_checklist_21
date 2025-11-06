@@ -185,21 +185,27 @@ function runStrategy(strategyId) {
         return;
     }
     
+    console.log("Strategy execution button clicked. Strategy ID:", strategyId);
+    console.log("Request URL:", '/{{ P.package_name }}/screening/command/start/' + strategyId);
+    
     $.ajax({
         url: '/{{ P.package_name }}/screening/command/start/' + strategyId,
         type: 'POST',
         success: function(response) {
+            console.log("Success response:", response);
             if (response.ret === 'success') {
                 notify(response.msg, 'success');
                 setTimeout(function() {
                     location.href = '/{{ P.package_name }}/screening/manual';
                 }, 1000);
             } else {
+                console.log("Start failed:", response.msg);
                 notify('시작 실패: ' + response.msg, 'error');
             }
         },
-        error: function() {
-            notify('시작 중 오류가 발생했습니다.', 'error');
+        error: function(xhr, status, error) {
+            console.log("AJAX Error:", error, status, xhr.responseText);
+            notify('시작 중 오류가 발생했습니다. 콘솔에서 상세 정보를 확인하세요.', 'error');
         }
     });
 }

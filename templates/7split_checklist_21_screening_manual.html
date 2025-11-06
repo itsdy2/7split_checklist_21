@@ -102,20 +102,26 @@ $('#run_manual_btn').on('click', function() {
     
     $(this).prop('disabled', true).text('실행 중...');
     
+    console.log("Manual execution button clicked. Strategy:", "{{ arg.default_strategy }}");
+    console.log("Request URL:", '/{{ P.package_name }}/screening/command/start/{{ arg.default_strategy }}');
+    
     $.ajax({
         url: '/{{ P.package_name }}/screening/command/start/{{ arg.default_strategy }}',
         type: 'POST',
         success: function(response) {
+            console.log("Success response:", response);
             if (response.ret === 'success') {
                 notify('스크리닝이 시작되었습니다.', 'success');
                 $('#progress_container').show();
             } else {
+                console.log("Start failed:", response.msg);
                 notify('시작 실패: ' + response.msg, 'error');
                 $('#run_manual_btn').prop('disabled', false).text('기본 전략 실행');
             }
         },
-        error: function() {
-            notify('시작 중 오류가 발생했습니다.', 'error');
+        error: function(xhr, status, error) {
+            console.log("AJAX Error:", error, status, xhr.responseText);
+            notify('시작 중 오류가 발생했습니다. 콘솔에서 상세 정보를 확인하세요.', 'error');
             $('#run_manual_btn').prop('disabled', false).text('기본 전략 실행');
         }
     });

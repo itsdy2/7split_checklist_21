@@ -47,11 +47,18 @@ class Logic:
     
     @staticmethod
     def start_screening(strategy_id=None, execution_type='manual'):
+        logger.debug(f"Logic.start_screening called with strategy_id: {strategy_id}, execution_type: {execution_type}")
+        
         if F.config['use_celery']:
+            logger.info(f"Starting screening via Celery: strategy_id={strategy_id}, type={execution_type}")
             result = Logic.task_start_screening.apply_async((strategy_id, execution_type))
+            logger.info(f"Celery task started: {result.id}")
             return {'success': True, 'message': f'Celery task started: {result.id}'}
         else:
-            return Logic.task_start_screening(strategy_id, execution_type)
+            logger.info(f"Starting screening synchronously: strategy_id={strategy_id}, type={execution_type}")
+            result = Logic.task_start_screening(None, strategy_id, execution_type)
+            logger.info(f"Screening completed synchronously")
+            return result
 
     @staticmethod
     def cleanup_old_data():
@@ -142,11 +149,15 @@ class Logic:
         from .logic_notifier import Notifier
         start_time = time.time()
         
+        logger.info(f"Starting screening task: strategy_id={strategy_id}, execution_type={execution_type}")
+        
         # 기본 전략 설정
         if strategy_id is None:
             strategy_id = PluginModelSetting.get('default_strategy')
+            logger.debug(f"Using default strategy: {strategy_id}")
         
         # 전략 로드
+        logger.debug(f"Attempting to load strategy: {strategy_id}")
         strategy = get_strategy_func(strategy_id)
         
         if not strategy:
@@ -154,6 +165,7 @@ class Logic:
             logger.error(error_msg)
             return {'success': False, 'message': error_msg}
 
+        logger.info(f"Successfully loaded strategy: {strategy.strategy_name} (ID: {strategy_id})")
         required_data = strategy.required_data
         
         logger.info(f"Starting screening with strategy: {strategy.strategy_name}")
@@ -179,9 +191,15 @@ class Logic:
                 return {'success': False, 'message': error_msg}
             
             # 데이터 수집기 초기화
+            logger.info("Initializing DataCollector...")
             collector = DataCollector(dart_api_key=dart_api_key)
+            logger.info(f"DataCollector initialized. DART API key available: {bool(dart_api_key)}")
+            
             calculator = Calculator()
+            logger.debug("Calculator initialized")
+            
             notifier = Notifier(webhook_url=webhook_url)
+            logger.debug("Notifier initialized")
             
             # 전체 종목 수집
             logger.info("Collecting all tickers...")

@@ -204,12 +204,24 @@ class ModuleScreening(PluginModuleBase):
         P.logger.info(f"ModuleScreening.process_command: {command}, arg1={arg1}")
         try:
             if command == 'start':
+                P.logger.debug(f"Command 'start' received with arg1: {arg1}")
                 strategy_id = arg1 if arg1 else P.ModelSetting.get('default_strategy')
-                result = Logic.start_screening(strategy_id=strategy_id, execution_type='manual')
-                if result['success']:
-                    return jsonify({'ret': 'success', 'msg': '스크리닝이 시작되었습니다.'})
-                else:
-                    return jsonify({'ret': 'error', 'msg': result.get('message', '스크리닝 시작에 실패했습니다.')})
+                P.logger.debug(f"Starting screening with strategy_id: {strategy_id}, execution_type: manual")
+                
+                try:
+                    result = Logic.start_screening(strategy_id=strategy_id, execution_type='manual')
+                    P.logger.debug(f"Screening result: {result}")
+                    
+                    if result and result.get('success'):
+                        return jsonify({'ret': 'success', 'msg': result.get('message', '스크리닝이 시작되었습니다.')})
+                    else:
+                        error_msg = result.get('message', '스크리닝 시작에 실패했습니다.') if result else '스크리닝 시작에 실패했습니다. (결과 없음)'
+                        P.logger.error(f"Screening failed: {error_msg}")
+                        return jsonify({'ret': 'error', 'msg': error_msg})
+                except Exception as e:
+                    P.logger.error(f"Exception in start command: {str(e)}")
+                    P.logger.error(traceback.format_exc())
+                    return jsonify({'ret': 'error', 'msg': f'스크리닝 시작 중 오류 발생: {str(e)}'})
             elif command == 'status':
                 history = db.session.query(ScreeningHistory).order_by(ScreeningHistory.execution_date.desc()).first()
                 if not history:
