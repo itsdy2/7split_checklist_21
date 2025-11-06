@@ -8,7 +8,7 @@ import json
 from datetime import datetime, date
 from flask import has_app_context
 from framework import app, db, socketio, F, celery
-from .setup import P, PluginModelSetting # P와 함께 PluginModelSetting 임포트
+from .setup import P # P와 함께 PluginModelSetting 임포트 -> PluginModelSetting 제거
 
 
 
@@ -66,6 +66,7 @@ class Logic:
         Returns:
             dict: 실행 결과
         """
+        from .setup import PluginModelSetting
         from .strategies import get_strategy
         from .model import StockScreeningResult, ScreeningHistory, FilterDetail
         from .logic_collector import DataCollector
@@ -357,6 +358,7 @@ class Logic:
                 pass
             
             # 에러 알림
+            from .setup import PluginModelSetting
             if PluginModelSetting.get('notification_discord') == 'True':
                 notifier = Notifier(webhook_url=PluginModelSetting.get('discord_webhook_url'))
                 notifier.send_error_notification(error_msg)
@@ -404,6 +406,7 @@ class Logic:
     @staticmethod
     def run_single_condition(strategy_id, condition_number):
         """단일 조건 실행"""
+        from .setup import PluginModelSetting
         from strategies import get_strategy
         from logic_collector import DataCollector
         from logic_notifier import Notifier
@@ -418,7 +421,7 @@ class Logic:
             condition_name = strategy.conditions.get(condition_number, 'N/A')
             logger.info(f'Condition name: {condition_name}')
 
-            collector = DataCollector(dart_api_key=Logic.get_setting('dart_api_key'))
+            collector = DataCollector(dart_api_key=PluginModelSetting.get('dart_api_key'))
             all_tickers = collector.get_all_tickers()
 
             passed_count = 0
@@ -447,7 +450,7 @@ class Logic:
 
             result = {'passed': passed_count, 'failed': failed_count}
 
-            notifier = Notifier(webhook_url=Logic.get_setting('discord_webhook_url'))
+            notifier = Notifier(webhook_url=PluginModelSetting.get('discord_webhook_url'))
             notifier.send_condition_result_notification(strategy_id, condition_number, result)
 
         except Exception as e:
@@ -456,16 +459,17 @@ class Logic:
     @staticmethod
     def scheduler_start():
         """스케줄러 시작"""
+        from .setup import PluginModelSetting
         from framework.job import Job
         from .model import ConditionSchedule
         try:
             from framework.job import Job
             
             # 전체 스크리닝 스케줄
-            if Logic.get_setting('auto_start') == 'True':
-                screening_time = Logic.get_setting('screening_time')
+            if PluginModelSetting.get('auto_start') == 'True':
+                screening_time = PluginModelSetting.get('screening_time')
                 hour, minute = map(int, screening_time.split(':'))
-                default_strategy = Logic.get_setting('default_strategy')
+                default_strategy = PluginModelSetting.get('default_strategy')
                 
                 Job.scheduler.add_job(
                     id=f'{package_name}_auto',
