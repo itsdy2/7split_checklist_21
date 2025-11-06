@@ -2,211 +2,62 @@
 {% block content %}
 
 <div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-2" style="position: sticky; top: 0; background: var(--body-bg, #fff); z-index: 2; padding-top: 10px;">
-        <h3 class="mb-0"><i class="material-icons">settings</i> 세븐스플릿 스크리닝 설정</h3>
-        <div>
-            <button type="button" id="save_btn" class="btn btn-primary"><i class="material-icons">save</i> 저장</button>
-            <button type="button" id="reset_btn" class="btn btn-secondary">DB 초기화</button>
+    <form id="setting" name="setting">
+        <div class="d-flex justify-content-between align-items-center mb-2" style="position: sticky; top: 0; background: var(--body-bg, #fff); z-index: 2; padding-top: 10px;">
+            <h3 class="mb-0"><i class="material-icons">settings</i> 세븐스플릿 스크리닝 설정</h3>
+            <div>
+                {{ macros.m_button_group([['globalSettingSaveBtn', '설정 저장'], ['reset_db_btn', 'DB 초기화']]) }}
+            </div>
         </div>
-    </div>
 
-    <form id="setting_form">
+        {{ macros.m_hr() }}
+
         <!-- API 설정 -->
         <div class="card mb-3">
-            <div class="card-header">
-                <strong>API 설정</strong>
-            </div>
+            <div class="card-header"><strong>API 설정</strong></div>
             <div class="card-body">
-                <div class="form-group">
-                    <label for="dart_api_key">
-                        DART API 인증키 <span class="text-danger">*필수</span>
-                    </label>
-                    <input 
-                        type="text" 
-                        class="form-control" 
-                        id="dart_api_key" 
-                        name="dart_api_key" 
-                        value="{{ arg.settings.dart_api_key }}"
-                        placeholder="DART Open API 인증키를 입력하세요"
-                    >
-                    <small class="form-text text-muted">
-                        <a href="https://opendart.fss.or.kr/" target="_blank">DART 홈페이지</a>에서 무료로 발급받을 수 있습니다.
-                    </small>
-                </div>
+                {{ macros.setting_input_text('dart_api_key', 'DART API 인증키', value=arg.dart_api_key, desc=['DART Open API 인증키를 입력하세요. <a href="https://opendart.fss.or.kr/" target="_blank">DART 홈페이지</a>에서 무료로 발급받을 수 있습니다.'], placeholder='DART Open API 인증키') }}
             </div>
         </div>
 
         <!-- 알림 설정 -->
         <div class="card mb-3">
-            <div class="card-header">
-                <strong>알림 설정</strong>
-            </div>
+            <div class="card-header"><strong>알림 설정</strong></div>
             <div class="card-body">
-                <div class="form-group">
-                    <div class="form-check">
-                        <input 
-                            class="form-check-input" 
-                            type="checkbox" 
-                            id="notification_discord" 
-                            name="notification_discord" 
-                            value="True"
-                            {% if arg.settings.notification_discord == 'True' %}checked{% endif %}
-                        >
-                        <label class="form-check-label" for="notification_discord">
-                            Discord 알림 사용
-                        </label>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="discord_webhook_url">Discord Webhook URL</label>
-                    <input 
-                        type="text" 
-                        class="form-control" 
-                        id="discord_webhook_url" 
-                        name="discord_webhook_url" 
-                        value="{{ arg.settings.discord_webhook_url }}"
-                        placeholder="https://discord.com/api/webhooks/..."
-                    >
-                    <small class="form-text text-muted">
-                        Discord 서버 설정 → 연동 → 웹후크에서 생성할 수 있습니다.
-                    </small>
-                </div>
+                {{ macros.setting_checkbox('notification_discord', 'Discord 알림 사용', value=arg.notification_discord) }}
+                {{ macros.setting_input_text('discord_webhook_url', 'Discord Webhook URL', value=arg.discord_webhook_url, desc=['Discord 서버 설정 → 연동 → 웹후크에서 생성할 수 있습니다.'], placeholder='https://discord.com/api/webhooks/...') }}
             </div>
         </div>
 
         <!-- 스케줄 설정 -->
         <div class="card mb-3">
-            <div class="card-header">
-                <strong>스케줄 설정</strong>
-            </div>
+            <div class="card-header"><strong>스케줄 설정</strong></div>
             <div class="card-body">
-                <div class="form-group">
-                    <div class="form-check">
-                        <input 
-                            class="form-check-input" 
-                            type="checkbox" 
-                            id="auto_start" 
-                            name="auto_start" 
-                            value="True"
-                            {% if arg.settings.auto_start == 'True' %}checked{% endif %}
-                        >
-                        <label class="form-check-label" for="auto_start">
-                            자동 실행 활성화
-                        </label>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="screening_time">실행 시간 (평일 기준)</label>
-                    <input 
-                        type="time" 
-                        class="form-control" 
-                        id="screening_time" 
-                        name="screening_time" 
-                        value="{{ arg.settings.screening_time }}"
-                    >
-                    <small class="form-text text-muted">
-                        장 시작 전인 오전 9시를 권장합니다.
-                    </small>
-                </div>
+                {{ macros.global_setting_scheduler_button(arg.is_include, arg.is_running) }}
+                {{ macros.setting_checkbox('auto_start', '자동 실행 활성화', value=arg.auto_start, desc=['매일 지정된 시간에 전체 스크리닝을 자동으로 실행합니다.']) }}
+                {{ macros.setting_input_text('screening_time', '실행 시간 (평일 기준)', value=arg.screening_time, type='time', desc=['장 시작 전인 오전 9시를 권장합니다.']) }}
             </div>
         </div>
 
-        <!-- 필터 설정 -->
+        <!-- 전략 설정 -->
         <div class="card mb-3">
-            <div class="card-header">
-                <strong>필터링 조건</strong>
-            </div>
+            <div class="card-header"><strong>전략 설정</strong></div>
             <div class="card-body">
-                <ul class="nav nav-tabs" id="strategyTabs" role="tablist">
-                    <li class="nav-item">
-                        <a class="nav-link active" id="seven-split-tab" data-toggle="tab" href="#seven-split" role="tab">세븐스플릿</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" id="dividend-tab" data-toggle="tab" href="#dividend" role="tab">배당주</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" id="value-tab" data-toggle="tab" href="#value" role="tab">가치주</a>
-                    </li>
-                </ul>
-                <div class="tab-content" id="strategyTabsContent">
-                    <!-- 세븐스플릿 설정 -->
-                    <div class="tab-pane fade show active" id="seven-split" role="tabpanel">
-                        <div class="row mt-3">
-                            <div class="col-md-4"><div class="form-group"><label>최소 시가총액 (억)</label><input type="number" class="form-control" name="min_market_cap" value="{{ arg.settings.min_market_cap }}"></div></div>
-                            <div class="col-md-4"><div class="form-group"><label>최대 부채비율 (%)</label><input type="number" class="form-control" name="max_debt_ratio" value="{{ arg.settings.max_debt_ratio }}"></div></div>
-                            <div class="col-md-4"><div class="form-group"><label>최소 유보율 (%)</label><input type="number" class="form-control" name="min_retention_ratio" value="{{ arg.settings.min_retention_ratio }}"></div></div>
-                            <div class="col-md-4"><div class="form-group"><label>최소 거래대금 (억)</label><input type="number" class="form-control" name="min_trading_value" value="{{ arg.settings.min_trading_value }}"></div></div>
-                            <div class="col-md-4"><div class="form-group"><label>최소 ROE 평균 (%)</label><input type="number" class="form-control" name="min_roe_avg" value="{{ arg.settings.min_roe_avg }}"></div></div>
-                            <div class="col-md-4"><div class="form-group"><label>최소 PBR</label><input type="number" step="0.1" class="form-control" name="min_pbr" value="{{ arg.settings.min_pbr }}"></div></div>
-                            <div class="col-md-4"><div class="form-group"><label>최소 PER</label><input type="number" step="0.1" class="form-control" name="min_per" value="{{ arg.settings.min_per }}"></div></div>
-                            <div class="col-md-4"><div class="form-group"><label>최소 배당수익률 (%)</label><input type="number" step="0.1" class="form-control" name="min_div_yield" value="{{ arg.settings.min_div_yield }}"></div></div>
-                            <div class="col-md-4"><div class="form-group"><label>최소 PCR</label><input type="number" step="0.1" class="form-control" name="min_pcr" value="{{ arg.settings.min_pcr }}"></div></div>
-                            <div class="col-md-4"><div class="form-group"><label>최소 PSR</label><input type="number" step="0.1" class="form-control" name="min_psr" value="{{ arg.settings.min_psr }}"></div></div>
-                            <div class="col-md-4"><div class="form-group"><label>최소 F-Score</label><input type="number" class="form-control" name="min_fscore" value="{{ arg.settings.min_fscore }}"></div></div>
-                            <div class="col-md-4"><div class="form-group"><label>최소 최대주주 지분율 (%)</label><input type="number" class="form-control" name="min_major_shareholder_ratio" value="{{ arg.settings.min_major_shareholder_ratio }}"></div></div>
-                        </div>
-                    </div>
-                    <!-- 배당주 설정 -->
-                    <div class="tab-pane fade" id="dividend" role="tabpanel">
-                        <div class="row mt-3">
-                            <div class="col-md-4"><div class="form-group"><label>최소 시가총액 (억)</label><input type="number" class="form-control" name="min_market_cap_dividend" value="{{ arg.settings.min_market_cap_dividend }}"></div></div>
-                            <div class="col-md-4"><div class="form-group"><label>최소 배당수익률 (%)</label><input type="number" step="0.1" class="form-control" name="min_div_yield_dividend" value="{{ arg.settings.min_div_yield_dividend }}"></div></div>
-                            <div class="col-md-4"><div class="form-group"><label>최소 배당성향 (%)</label><input type="number" class="form-control" name="min_dividend_payout" value="{{ arg.settings.min_dividend_payout }}"></div></div>
-                            <div class="col-md-4"><div class="form-group"><label>최대 배당성향 (%)</label><input type="number" class="form-control" name="max_dividend_payout" value="{{ arg.settings.max_dividend_payout }}"></div></div>
-                            <div class="col-md-4"><div class="form-group"><label>최대 부채비율 (%)</label><input type="number" class="form-control" name="max_debt_ratio_dividend" value="{{ arg.settings.max_debt_ratio_dividend }}"></div></div>
-                            <div class="col-md-4"><div class="form-group"><label>최소 거래대금 (억)</label><input type="number" class="form-control" name="min_trading_value_dividend" value="{{ arg.settings.min_trading_value_dividend }}"></div></div>
-                        </div>
-                    </div>
-                    <!-- 가치주 설정 -->
-                    <div class="tab-pane fade" id="value" role="tabpanel">
-                        <div class="row mt-3">
-                            <div class="col-md-4"><div class="form-group"><label>최소 시가총액 (억)</label><input type="number" class="form-control" name="min_market_cap_value" value="{{ arg.settings.min_market_cap_value }}"></div></div>
-                            <div class="col-md-4"><div class="form-group"><label>최대 PER</label><input type="number" step="0.1" class="form-control" name="max_per_value" value="{{ arg.settings.max_per_value }}"></div></div>
-                            <div class="col-md-4"><div class="form-group"><label>최소 PBR</label><input type="number" step="0.1" class="form-control" name="min_pbr_value" value="{{ arg.settings.min_pbr_value }}"></div></div>
-                            <div class="col-md-4"><div class="form-group"><label>최대 PBR</label><input type="number" step="0.1" class="form-control" name="max_pbr_value" value="{{ arg.settings.max_pbr_value }}"></div></div>
-                            <div class="col-md-4"><div class="form-group"><label>최대 부채비율 (%)</label><input type="number" class="form-control" name="max_debt_ratio_value" value="{{ arg.settings.max_debt_ratio_value }}"></div></div>
-                            <div class="col-md-4"><div class="form-group"><label>최소 유동비율 (%)</label><input type="number" class="form-control" name="min_current_ratio_value" value="{{ arg.settings.min_current_ratio_value }}"></div></div>
-                            <div class="col-md-4"><div class="form-group"><label>최소 ROE (%)</label><input type="number" class="form-control" name="min_roe_value" value="{{ arg.settings.min_roe_value }}"></div></div>
-                            <div class="col-md-4"><div class="form-group"><label>최소 거래대금 (억)</label><input type="number" class="form-control" name="min_trading_value_value" value="{{ arg.settings.min_trading_value_value }}"></div></div>
-                        </div>
-                    </div>
-                </div>
+                {{ macros.setting_select('default_strategy', '기본 실행 전략', 
+                    items=[(s.strategy_id, s.strategy_name) for s in arg.strategies], 
+                    value=arg.default_strategy, 
+                    desc=['수동 실행 또는 자동 스케줄링 시 사용할 기본 전략을 선택합니다.']
+                ) }}
             </div>
         </div>
 
-        
     </form>
 </div>
 
 <script>
 $(document).ready(function() {
-    // 저장 버튼 클릭
-    $('#save_btn').on('click', function(e) {
-        e.preventDefault();
-        var form = $('#setting_form');
-        var formData = form.serialize();
-
-        $.ajax({
-            url: '/{{ P.package_name }}/base/ajax/setting_save',
-            type: 'POST',
-            data: formData,
-            success: function(response) {
-                if (response.ret === 'success') {
-                    notify(response.msg, 'success');
-                } else {
-                    notify(response.msg, 'warning');
-                }
-            },
-            error: function() {
-                notify('저장 중 오류가 발생했습니다.', 'error');
-            }
-        });
-    });
-
     // DB 초기화 버튼 클릭
-    $('#reset_btn').on('click', function(e) {
+    $('#reset_db_btn').on('click', function(e) {
         e.preventDefault();
         if (!confirm('모든 설정을 초기값으로 되돌리시겠습니까?')) {
             return;

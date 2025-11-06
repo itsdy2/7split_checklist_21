@@ -55,6 +55,8 @@ try:
     from .mod_screening import ModuleScreening
     
     P.set_module_list([ModuleBase, ModuleScreening])
+
+    PluginModelSetting = P.ModelSetting
     
 except Exception as e:
     P.logger.error(f'Exception:{str(e)}')

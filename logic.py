@@ -8,7 +8,7 @@ import json
 from datetime import datetime, date
 from flask import has_app_context
 from framework import app, db, socketio, F, celery
-from .setup import *
+from .setup import P, PluginModelSetting # P와 함께 PluginModelSetting 임포트
 
 
 
@@ -18,7 +18,7 @@ logger = P.logger                # <-- 이 줄을 추가합니다.
 package_name = P.package_name    # <-- 이 줄을 추가합니다. (표준 방식)
 
 
-class Logic(PluginModuleBase):
+class Logic:
     db_default = {
         'dart_api_key': '',
         'discord_webhook_url': '',
@@ -31,15 +31,6 @@ class Logic(PluginModuleBase):
         # ... (기존 db_default 내용과 동일)
     }
 
-    def __init__(self, P):
-        super().__init__(P, None)
-        self.name = "setting"
-
-    def plugin_load():
-        # DB 기본값 로딩 (필요 시)
-        ModelSetting.db_init(self.db_default)
-    
-    
     @staticmethod
     def get_available_strategies():
         """사용 가능한 전략 목록"""
@@ -76,7 +67,7 @@ class Logic(PluginModuleBase):
             dict: 실행 결과
         """
         from .strategies import get_strategy
-        from .model import StockScreeningResult, ScreeningHistory, FilterDetail, ModelSetting
+        from .model import StockScreeningResult, ScreeningHistory, FilterDetail
         from .logic_collector import DataCollector
         from .logic_calculator import Calculator
         from .logic_notifier import Notifier
@@ -85,7 +76,7 @@ class Logic(PluginModuleBase):
         
         # 기본 전략 설정
         if strategy_id is None:
-            strategy_id = Logic.get_setting('default_strategy')
+            strategy_id = PluginModelSetting.get('default_strategy')
         
         # 전략 로드
         strategy = get_strategy(strategy_id)
@@ -105,19 +96,18 @@ class Logic(PluginModuleBase):
             history.execution_date = datetime.now()
             history.execution_type = execution_type
             history.status = 'running'
-            db.session.add(history)
-            db.session.commit()
+            history.save()
             
             # 설정 로드
-            dart_api_key = Logic.get_setting('dart_api_key')
-            webhook_url = Logic.get_setting('discord_webhook_url')
+            dart_api_key = PluginModelSetting.get('dart_api_key')
+            webhook_url = PluginModelSetting.get('discord_webhook_url')
             
             if not dart_api_key:
                 error_msg = "DART API Key가 설정되지 않았습니다."
                 logger.error(error_msg)
                 history.status = 'failed'
                 history.error_message = error_msg
-                db.session.commit()
+                history.save()
                 return {'success': False, 'message': error_msg}
             
             # 데이터 수집기 초기화
@@ -135,14 +125,14 @@ class Logic(PluginModuleBase):
                 logger.error(error_msg)
                 history.status = 'failed'
                 history.error_message = error_msg
-                db.session.commit()
+                history.save()
                 return {'success': False, 'message': error_msg}
             
             history.total_stocks = total_stocks
-            db.session.commit()
+            history.save()
             
             # Discord 시작 알림
-            if Logic.get_setting('notification_discord') == 'True':
+            if PluginModelSetting.get('notification_discord') == 'True':
                 notifier.send_start_notification(total_stocks, strategy.strategy_name)
             
             # 스크리닝 실행
@@ -289,7 +279,7 @@ class Logic(PluginModuleBase):
                     result_record.has_paid_increase = stock_data['has_paid_increase']
                     result_record.condition_details = json.dumps(condition_details)
                     
-                    db.session.add(result_record)
+                    result_record.save()
                     
                     if passed:
                         passed_stocks.append(stock_data)
@@ -316,10 +306,10 @@ class Logic(PluginModuleBase):
             history.execution_time = execution_time
             history.filter_statistics = json.dumps(filter_stats)
             history.status = 'completed'
-            db.session.commit()
+            history.save()
             
             # Discord 알림
-            if Logic.get_setting('notification_discord') == 'True':
+            if PluginModelSetting.get('notification_discord') == 'True':
                 notifier.send_screening_result(
                     passed_stocks, 
                     total_stocks, 
@@ -362,13 +352,13 @@ class Logic(PluginModuleBase):
             try:
                 history.status = 'failed'
                 history.error_message = error_msg
-                db.session.commit()
+                history.save()
             except:
                 pass
             
             # 에러 알림
-            if Logic.get_setting('notification_discord') == 'True':
-                notifier = Notifier(webhook_url=Logic.get_setting('discord_webhook_url'))
+            if PluginModelSetting.get('notification_discord') == 'True':
+                notifier = Notifier(webhook_url=PluginModelSetting.get('discord_webhook_url'))
                 notifier.send_error_notification(error_msg)
             
             return {'success': False, 'message': error_msg}

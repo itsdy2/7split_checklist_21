@@ -156,3 +156,8 @@ dmypy.json
 
 
 flaskfarm_plugin_sample/
+.gemini/
+gha-creds-*.json
+
+.git/
+GEMINI_OLD.md

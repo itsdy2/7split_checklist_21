@@ -197,7 +197,7 @@ class ModuleScreening(PluginModuleBase):
                 strategy_id = arg1
                 if not strategy_id:
                     return jsonify({'ret': 'error', 'msg': '전략 ID가 필요합니다.'})
-                Logic.set_setting('default_strategy', strategy_id)
+                P.ModelSetting.set('default_strategy', strategy_id)
                 return jsonify({'ret': 'success', 'msg': '기본 전략이 설정되었습니다.'})
             elif command == 'recent_history':
                 histories = db.session.query(ScreeningHistory).order_by(ScreeningHistory.execution_date.desc()).limit(5).all()
@@ -380,5 +380,36 @@ class {class_name}(BaseStrategy):
 
         except Exception as e:
             P.logger.error(f"API error: {str(e)}")
+            P.logger.error(traceback.format_exc())
+            return jsonify({'ret': 'error', 'msg': str(e)})
+
+    def process_ajax(self, sub, req):
+        try:
+            if sub == 'save_schedules':
+                schedules = []
+                form_data = req.form.to_dict()
+                strategies = Logic.get_strategies_metadata()
+                
+                for s in strategies:
+                    strategy_id = s['id']
+                    cron_key = f'cron_{strategy_id}'
+                    enabled_key = f'enabled_{strategy_id}'
+                    
+                    cron_expression = form_data.get(cron_key, '').strip()
+                    is_enabled = enabled_key in form_data
+
+                    if cron_expression:
+                        schedules.append({
+                            'strategy_id': strategy_id,
+                            'condition_number': 0, # 전략 전체 스케줄링
+                            'cron_expression': cron_expression,
+                            'is_enabled': is_enabled
+                        })
+
+                Logic.save_condition_schedules(schedules)
+                return jsonify({'ret': 'success', 'msg': '스케줄이 저장되었습니다.'})
+
+        except Exception as e:
+            P.logger.error(f"AJAX error: {str(e)}")
             P.logger.error(traceback.format_exc())
             return jsonify({'ret': 'error', 'msg': str(e)})

@@ -49,7 +49,7 @@ $('#save_btn').on('click', function(){
   var formData = form.serialize();
 
   $.ajax({
-    url: '/{{ P.package_name }}/screening/command/save_schedules',
+    url: '/ajax/{{ P.package_name }}/screening/save_schedules',
     type: 'POST',
     data: formData,
     success: function(res){

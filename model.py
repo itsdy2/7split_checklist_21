@@ -4,29 +4,15 @@
 SQLAlchemy ORM 모델 정의
 """
 from datetime import datetime
+from .setup import P
+from plugin import ModelBase
 from framework import db
 
-# 플러그인 설정
-class ModelSetting(db.Model):
-    __tablename__ = '7split_setting'
-    __table_args__ = {'mysql_collate': 'utf8_general_ci'}
-    
-    id = db.Column(db.Integer, primary_key=True)
-    key = db.Column(db.String(100), unique=True, nullable=False)
-    value = db.Column(db.String(500))
-    
-    def __init__(self, key, value):
-        self.key = key
-        self.value = value
-    
-    def __repr__(self):
-        return f'<Setting {self.key}={self.value}>'
-
-
 # 스크리닝 결과
-class StockScreeningResult(db.Model):
-    __tablename__ = '7split_screening_result'
-    __table_args__ = {'mysql_collate': 'utf8_general_ci'}
+class StockScreeningResult(ModelBase):
+    P = P
+    __tablename__ = f'{P.package_name}_screening_result'
+    __bind_key__ = P.package_name
     
     id = db.Column(db.Integer, primary_key=True)
     
@@ -88,9 +74,10 @@ class StockScreeningResult(db.Model):
 
 
 # 스크리닝 실행 이력
-class ScreeningHistory(db.Model):
-    __tablename__ = '7split_screening_history'
-    __table_args__ = {'mysql_collate': 'utf8_general_ci'}
+class ScreeningHistory(ModelBase):
+    P = P
+    __tablename__ = f'{P.package_name}_screening_history'
+    __bind_key__ = P.package_name
     
     id = db.Column(db.Integer, primary_key=True)
     
@@ -122,9 +109,10 @@ class ScreeningHistory(db.Model):
 
 
 # 조건별 필터링 상세
-class FilterDetail(db.Model):
-    __tablename__ = '7split_filter_detail'
-    __table_args__ = {'mysql_collate': 'utf8_general_ci'}
+class FilterDetail(ModelBase):
+    P = P
+    __tablename__ = f'{P.package_name}_filter_detail'
+    __bind_key__ = P.package_name
     
     id = db.Column(db.Integer, primary_key=True)
     
@@ -143,9 +131,10 @@ class FilterDetail(db.Model):
 
 
 # 개별 조건 스케줄
-class ConditionSchedule(db.Model):
-    __tablename__ = '7split_condition_schedule'
-    __table_args__ = {'mysql_collate': 'utf8_general_ci'}
+class ConditionSchedule(ModelBase):
+    P = P
+    __tablename__ = f'{P.package_name}_condition_schedule'
+    __bind_key__ = P.package_name
 
     id = db.Column(db.Integer, primary_key=True)
     strategy_id = db.Column(db.String(50), nullable=False)
