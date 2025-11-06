@@ -100,6 +100,40 @@ class ModuleBase(PluginModuleBase):
                 else:
                     result = Logic.cleanup_old_data()
                     return jsonify(result)
+            
+            elif sub == 'save_schedules':
+                from .logic import Logic
+                schedules = []
+                form_data = req.form.to_dict()
+                from .strategies import get_strategies_info
+                
+                strategies = get_strategies_info()
+                
+                for s in strategies:
+                    strategy_id = s['id']
+                    cron_key = f'cron_{strategy_id}'
+                    enabled_key = f'enabled_{strategy_id}'
+                    
+                    cron_expression = form_data.get(cron_key, '').strip()
+                    is_enabled = enabled_key in form_data
+
+                    if cron_expression:
+                        schedules.append({
+                            'strategy_id': strategy_id,
+                            'condition_number': 0, # 전략 전체 스케줄링
+                            'cron_expression': cron_expression,
+                            'is_enabled': is_enabled
+                        })
+
+                if F.config['use_celery']:
+                    result = Logic.task_save_condition_schedules.apply_async((schedules,))
+                    return jsonify({'ret': 'success', 'msg': '스케줄이 저장되었습니다.'})
+                else:
+                    success = Logic.task_save_condition_schedules(schedules)
+                    if success:
+                        return jsonify({'ret': 'success', 'msg': '스케줄이 저장되었습니다.'})
+                    else:
+                        return jsonify({'ret': 'error', 'msg': '스케줄 저장에 실패했습니다.'})
 
         except Exception as e:
             P.logger.error(f"Exception in process_ajax: {str(e)}")

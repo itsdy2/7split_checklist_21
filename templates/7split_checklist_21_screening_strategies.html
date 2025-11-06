@@ -186,9 +186,8 @@ function runStrategy(strategyId) {
     }
     
     $.ajax({
-        url: '/{{ P.package_name }}/screening/command',
+        url: '/{{ P.package_name }}/screening/command/start/' + strategyId,
         type: 'POST',
-        data: {cmd: 'start', arg1: strategyId},
         success: function(response) {
             if (response.ret === 'success') {
                 notify(response.msg, 'success');
@@ -208,9 +207,8 @@ function runStrategy(strategyId) {
 // 기본 전략으로 설정
 function setDefaultStrategy(strategyId) {
     $.ajax({
-        url: '/{{ P.package_name }}/screening/command',
+        url: '/{{ P.package_name }}/screening/command/set_default_strategy/' + strategyId,
         type: 'POST',
-        data: {cmd: 'set_default_strategy', arg1: strategyId},
         success: function(response) {
             if (response.ret === 'success') {
                 notify(response.msg, 'success');
@@ -237,9 +235,8 @@ function deleteStrategy(strategyId) {
     }
     
     $.ajax({
-        url: '/{{ P.package_name }}/screening/command',
+        url: '/{{ P.package_name }}/screening/command/delete_strategy/' + strategyId,
         type: 'POST',
-        data: {cmd: 'delete_strategy', arg1: strategyId},
         success: function(response) {
             if (response.ret === 'success') {
                 notify(response.msg, 'success');
@@ -261,9 +258,8 @@ $(document).ready(function() {
 
 function loadRecentHistory() {
     $.ajax({
-        url: '/{{ P.package_name }}/screening/command',
+        url: '/{{ P.package_name }}/screening/command/recent_history',
         type: 'POST',
-        data: {cmd: 'recent_history'},
         success: function(response) {
             if (response.ret === 'success' && response.data.length > 0) {
                 var html = '';
