@@ -225,7 +225,7 @@ function setDefaultStrategy(strategyId) {
 
 // 전략 내보내기
 function downloadStrategy(strategyId) {
-    location.href = '/{{ P.package_name }}/screening/command/download_strategy?arg1=' + strategyId;
+    location.href = '/{{ P.package_name }}/screening/command/download_strategy/' + strategyId;
 }
 
 // 전략 삭제

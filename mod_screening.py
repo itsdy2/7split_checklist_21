@@ -177,6 +177,17 @@ class ModuleScreening(PluginModuleBase):
             elif page == 'import':
                 return render_template(f'{P.package_name}_{self.name}_import.html', arg=arg, P=P)
 
+            elif page == 'setting':
+                # The screening module doesn't have a setting page, redirect to strategies as default
+                # or inform user that this page doesn't exist for this module
+                P.logger.warning(f"Setting page not available for screening module: {page}")
+                return f"<div class='container'><h3>스크리닝 모듈에는 설정 페이지가 없습니다. <a href='/{P.package_name}/screening/strategies'>전략 선택</a> 페이지로 이동하세요.</h3></div>"
+
+            elif page == 'command':
+                # This handles cases where /screening/command is accessed directly
+                # which shouldn't happen in normal operation, but might occur due to malformed requests
+                P.logger.warning(f"Direct command access attempt: {page}")
+                return f"<div class='container'><h3>명령 실행은 올바른 방식으로 접근해야 합니다.</h3></div>"
             
             else:
                 P.logger.warning(f"Unknown sub menu: {page}")
