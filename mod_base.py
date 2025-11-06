@@ -89,17 +89,34 @@ class ModuleBase(PluginModuleBase):
     def process_ajax(self, sub, req):
         try:
             if sub == 'reset_db':
-                P.ModelSetting.reset_db()
-                return jsonify({'ret': 'success', 'msg': 'DB가 초기화되었습니다.'})
+                P.logger.info("DB 초기화 요청 시작")
+                try:
+                    P.ModelSetting.reset_db()
+                    P.logger.info("DB 초기화 성공")
+                    return jsonify({'ret': 'success', 'msg': 'DB가 초기화되었습니다.'})
+                except Exception as e:
+                    P.logger.error(f"DB 초기화 중 오류 발생: {str(e)}")
+                    P.logger.error(traceback.format_exc())
+                    return jsonify({'ret': 'error', 'msg': f'DB 초기화 실패: {str(e)}'})
             
             elif sub == 'manual_cleanup':
+                P.logger.info("수동 DB 정리 요청 시작")
                 from .logic import Logic
-                if F.config['use_celery']:
-                    result = Logic.task_cleanup_old_data.apply_async()
-                    return jsonify({'ret': 'success', 'msg': f'DB 정리 작업이 시작되었습니다. (작업 ID: {result.id})'})
-                else:
-                    result = Logic.cleanup_old_data()
-                    return jsonify(result)
+                try:
+                    if F.config['use_celery']:
+                        P.logger.debug("Celery 사용하여 DB 정리 시작")
+                        result = Logic.task_cleanup_old_data.apply_async()
+                        P.logger.info(f"DB 정리 Celery 작업 시작됨 (ID: {result.id})")
+                        return jsonify({'ret': 'success', 'msg': f'DB 정리 작업이 시작되었습니다. (작업 ID: {result.id})'})
+                    else:
+                        P.logger.debug("Celery 미사용 - 동기식 DB 정리 시작")
+                        result = Logic.cleanup_old_data()
+                        P.logger.info("DB 정리 완료")
+                        return jsonify(result)
+                except Exception as e:
+                    P.logger.error(f"수동 DB 정리 중 오류 발생: {str(e)}")
+                    P.logger.error(traceback.format_exc())
+                    return jsonify({'ret': 'error', 'msg': f'수동 DB 정리 실패: {str(e)}'})
             
             elif sub == 'save_schedules':
                 from .logic import Logic

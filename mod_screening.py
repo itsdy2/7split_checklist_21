@@ -204,15 +204,20 @@ class ModuleScreening(PluginModuleBase):
         P.logger.info(f"ModuleScreening.process_command: {command}, arg1={arg1}")
         try:
             if command == 'start':
-                P.logger.debug(f"Command 'start' received with arg1: {arg1}")
-                strategy_id = arg1 if arg1 else P.ModelSetting.get('default_strategy')
-                P.logger.debug(f"Starting screening with strategy_id: {strategy_id}, execution_type: manual")
-                
+                P.logger.info(f"Play_arrow 실행 명령 시작: arg1={arg1}")
                 try:
+                    P.logger.debug(f"Command 'start' received with arg1: {arg1}")
+                    strategy_id = arg1 if arg1 else P.ModelSetting.get('default_strategy')
+                    P.logger.info(f"Starting screening with strategy_id: {strategy_id}, execution_type: manual")
+                    
+                    # Log the actual strategy ID being used
+                    P.logger.debug(f"Using strategy_id for screening: {strategy_id}")
+                    
                     result = Logic.start_screening(strategy_id=strategy_id, execution_type='manual')
                     P.logger.debug(f"Screening result: {result}")
                     
                     if result and result.get('success'):
+                        P.logger.info("Play_arrow 실행 명령 성공적으로 시작됨")
                         return jsonify({'ret': 'success', 'msg': result.get('message', '스크리닝이 시작되었습니다.')})
                     else:
                         error_msg = result.get('message', '스크리닝 시작에 실패했습니다.') if result else '스크리닝 시작에 실패했습니다. (결과 없음)'
@@ -421,28 +426,41 @@ class {class_name}(BaseStrategy):
         from .logic import Logic
         try:
             if sub == 'save_schedules':
-                schedules = []
-                form_data = req.form.to_dict()
-                strategies = Logic.get_strategies_metadata()
-                
-                for s in strategies:
-                    strategy_id = s['id']
-                    cron_key = f'cron_{strategy_id}'
-                    enabled_key = f'enabled_{strategy_id}'
+                P.logger.info("스케줄 저장 요청 시작")
+                try:
+                    schedules = []
+                    form_data = req.form.to_dict()
+                    P.logger.debug(f"Received form data keys: {list(form_data.keys())}")
                     
-                    cron_expression = form_data.get(cron_key, '').strip()
-                    is_enabled = enabled_key in form_data
+                    strategies = Logic.get_strategies_metadata()
+                    P.logger.debug(f"Found {len(strategies)} strategies")
+                    
+                    for s in strategies:
+                        strategy_id = s['id']
+                        cron_key = f'cron_{strategy_id}'
+                        enabled_key = f'enabled_{strategy_id}'
+                        
+                        cron_expression = form_data.get(cron_key, '').strip()
+                        is_enabled = enabled_key in form_data
+                        
+                        P.logger.debug(f"Strategy {strategy_id}: cron={cron_expression}, enabled={is_enabled}")
+                        
+                        if cron_expression:
+                            schedules.append({
+                                'strategy_id': strategy_id,
+                                'condition_number': 0, # 전략 전체 스케줄링
+                                'cron_expression': cron_expression,
+                                'is_enabled': is_enabled
+                            })
 
-                    if cron_expression:
-                        schedules.append({
-                            'strategy_id': strategy_id,
-                            'condition_number': 0, # 전략 전체 스케줄링
-                            'cron_expression': cron_expression,
-                            'is_enabled': is_enabled
-                        })
-
-                Logic.save_condition_schedules(schedules)
-                return jsonify({'ret': 'success', 'msg': '스케줄이 저장되었습니다.'})
+                    P.logger.debug(f"Saving {len(schedules)} schedules")
+                    Logic.save_condition_schedules(schedules)
+                    P.logger.info(f"스케줄 저장 완료: {len(schedules)}개 스케줄 저장됨")
+                    return jsonify({'ret': 'success', 'msg': '스케줄이 저장되었습니다.'})
+                except Exception as e:
+                    P.logger.error(f"스케줄 저장 중 오류 발생: {str(e)}")
+                    P.logger.error(traceback.format_exc())
+                    return jsonify({'ret': 'error', 'msg': f'스케줄 저장 실패: {str(e)}'})
 
         except Exception as e:
             P.logger.error(f"AJAX error: {str(e)}")
