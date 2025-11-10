@@ -3,10 +3,10 @@
 7split_checklist_21 Plugin - Seven Split 21 Strategy
 세븐스플릿 21가지 체크리스트 전략
 """
-from .base_strategy import BaseStrategy  # 'strategies.base_strategy'를 '.base_strategy'로 변경
-from ..logic import Logic  # 'logic'을 '..logic'으로 변경
-from ..logic_calculator import Calculator  # 'logic_calculator'를 '..logic_calculator'로 변경
-from ..setup import * # 'from ..setup import *' 추가 (P.logger 사용을 위해)
+from .base_strategy import BaseStrategy
+from ..logic import Logic
+from ..logic_calculator import Calculator
+from ..setup import P
 
 logger = P.logger       
 

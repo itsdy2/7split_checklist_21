@@ -3,7 +3,7 @@ import traceback
 import json
 from datetime import datetime
 from plugin import *
-from .setup import P, F
+from .setup import P
 from framework import db
 from .backtesting import BacktestingEngine, BacktestingHistory
 from .strategies import get_strategies_info
@@ -197,9 +197,9 @@ class ModuleBacktesting(PluginModuleBase):
         Args:
             change_list: 변경된 설정 키 목록
         """
+        from .logic import Logic
         P.logger.debug(f"Backtesting module setting saved. Changed keys: {change_list}")
         
         # 스케줄링 간격이 변경되었다면 스케줄러 재시작
         if f'{self.name}_interval' in change_list:
-            P.logic.scheduler_stop(self.name)
-            P.logic.scheduler_start(self.name)
+            Logic.task_scheduler_restart.apply_async()

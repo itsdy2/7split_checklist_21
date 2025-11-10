@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import traceback
 from plugin import *
-from .setup import P, F
-from framework import db
+from .setup import P
+from framework import F, db
 
 class ModuleBase(PluginModuleBase):
     # Define the db_default directly to avoid import during initialization

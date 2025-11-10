@@ -162,3 +162,5 @@ gha-creds-*.json
 .git/
 .github/
 GEMINI_OLD.md
+.TEST/
+.tests/
