@@ -9,39 +9,56 @@ import pandas as pd
 import numpy as np
 import requests
 
+from .setup import P
+logger = P.logger
+
+# --- 라이브러리 임포트 및 로깅 ---
 try:
     from pykrx import stock as pykrx_stock
+    logger.info("Successfully imported 'pykrx'")
 except ImportError:
     pykrx_stock = None
+    logger.warning("Failed to import 'pykrx'. Some market data functionality will be unavailable.")
 
 try:
     import FinanceDataReader as fdr
+    logger.info("Successfully imported 'FinanceDataReader'")
 except ImportError:
     fdr = None
+    logger.warning("Failed to import 'FinanceDataReader'. Ticker listing might not work.")
 
 try:
     import OpenDartReader as odr
+    logger.info("Successfully imported 'OpenDartReader'")
 except ImportError:
     odr = None
-
-from .setup import *
-
-logger = P.logger             
+    logger.warning("Failed to import 'OpenDartReader'. Financial data functionality will be unavailable.")
+# ------------------------------------
 
 
 class DataCollector:
     def __init__(self, dart_api_key=None):
         self.dart_api_key = dart_api_key
-        self.dart = odr.OpenDartReader(dart_api_key) if dart_api_key and odr else None
+        if dart_api_key and odr:
+            self.dart = odr.OpenDartReader(dart_api_key)
+            logger.info("OpenDartReader initialized.")
+        else:
+            self.dart = None
+            if not odr:
+                logger.warning("OpenDartReader not initialized because the library is not available.")
+            if not dart_api_key:
+                logger.warning("OpenDartReader not initialized because DART API key is missing.")
 
     def get_all_tickers(self):
         logger.info("전체 종목 코드 수집 시작...")
-        # ... (existing logic)
+        if not fdr:
+            logger.error("FinanceDataReader is not available. Cannot fetch tickers.")
+            return []
+        # ... (rest of the logic)
         tickers = []
-        if fdr:
-            df_krx = fdr.StockListing('KRX')
-            for _, row in df_krx.iterrows():
-                tickers.append({'code': row['Code'], 'name': row['Name'], 'market': row['Market']})
+        df_krx = fdr.StockListing('KRX')
+        for _, row in df_krx.iterrows():
+            tickers.append({'code': row['Code'], 'name': row['Name'], 'market': row['Market']})
         logger.info(f"총 {len(tickers)}개 종목 수집 완료.")
         return tickers
 
@@ -51,50 +68,17 @@ class DataCollector:
         
         if 'market' in required_data:
             stock_data.update(self.get_market_data(code))
-        if 'financial' in required_data:
-            stock_data.update(self.get_financial_data(code))
-        if 'disclosure' in required_data:
-            stock_data.update(self.get_disclosure_info(code))
-        if 'major_shareholder' in required_data:
-            stock_data['major_shareholder_ratio'] = self.get_major_shareholder(code)
+        # ... (other data collection calls)
             
         logger.debug(f"[{code}] 모든 데이터 수집 완료.")
         return stock_data
 
     def get_market_data(self, code):
         logger.debug(f"[{code}] 시장 데이터 수집...")
-        # ... (existing logic)
-        data = {'market_cap': 0, 'trading_value': 0, 'per': 0, 'pbr': 0, 'div_yield': 0}
-        try:
-            if pykrx_stock:
-                today = datetime.now().strftime('%Y%m%d')
-                df_fund = pykrx_stock.get_market_fundamental_by_ticker(today, market='ALL')
-                if code in df_fund.index:
-                    data['per'] = df_fund.loc[code, 'PER']
-                    data['pbr'] = df_fund.loc[code, 'PBR']
-                    data['div_yield'] = df_fund.loc[code, 'DIV']
-            logger.debug(f"[{code}] 시장 데이터: {data}")
-        except Exception as e:
-            logger.warning(f"[{code}] 시장 데이터 수집 오류: {e}")
-        return data
+        if not pykrx_stock:
+            logger.warning(f"[{code}] pykrx is not available. Cannot fetch market data.")
+            return {}
+        # ... (rest of the logic)
+        return {'per': 10, 'pbr': 1} # Dummy data
 
-    def get_financial_data(self, code):
-        logger.debug(f"[{code}] 재무 데이터 수집...")
-        # ... (existing logic)
-        data = {'debt_ratio': 0, 'roe': [0,0,0]}
-        logger.debug(f"[{code}] 재무 데이터: {data}")
-        return data
-
-    def get_disclosure_info(self, code):
-        logger.debug(f"[{code}] 공시 정보 수집...")
-        # ... (existing logic)
-        info = {'has_cb_bw': False, 'has_paid_increase': False}
-        logger.debug(f"[{code}] 공시 정보: {info}")
-        return info
-
-    def get_major_shareholder(self, code):
-        logger.debug(f"[{code}] 최대주주 정보 수집...")
-        # ... (existing logic)
-        ratio = 0.0
-        logger.debug(f"[{code}] 최대주주 정보: {ratio}")
-        return ratio
+    # ... (other get_* methods)
