@@ -157,123 +157,110 @@ class SevenSplit21Strategy(BaseStrategy):
 
     
     def _check_market_cap(self, market_cap, min_market_cap):
-        """조건 7: 시가총액"""
-        try:
-            return market_cap >= min_market_cap
-        except:
-            return False
-    
+        passed = market_cap >= min_market_cap
+        logger.debug(f"  - 조건 7 (시총): {market_cap/10**8:,.0f}억 >= {min_market_cap/10**8:,.0f}억 -> {'PASS' if passed else 'FAIL'}")
+        return passed
+
     def _check_debt_ratio(self, debt_ratio, max_debt_ratio):
-        """조건 8: 부채비율"""
-        try:
-            if debt_ratio is None:
-                return False
-            return debt_ratio < max_debt_ratio
-        except:
+        if debt_ratio is None:
+            logger.debug(f"  - 조건 8 (부채비율): 데이터 없음 -> FAIL")
             return False
-    
+        passed = debt_ratio < max_debt_ratio
+        logger.debug(f"  - 조건 8 (부채비율): {debt_ratio:.2f}% < {max_debt_ratio}% -> {'PASS' if passed else 'FAIL'}")
+        return passed
+
     def _check_retention_ratio(self, retention_ratio, min_retention_ratio):
-        """조건 9: 유보율"""
-        try:
-            if retention_ratio is None:
-                return False
-            return retention_ratio >= min_retention_ratio
-        except:
+        if retention_ratio is None:
+            logger.debug(f"  - 조건 9 (유보율): 데이터 없음 -> FAIL")
             return False
-    
+        passed = retention_ratio >= min_retention_ratio
+        logger.debug(f"  - 조건 9 (유보율): {retention_ratio:.2f}% >= {min_retention_ratio}% -> {'PASS' if passed else 'FAIL'}")
+        return passed
+
     def _check_consecutive_losses(self, net_income_3y):
-        """조건 10: 3년 연속 적자 제외"""
-        try:
-            if not net_income_3y or len(net_income_3y) < 3:
-                return False
-            consecutive_loss = self.calculator.check_consecutive_losses(net_income_3y)
-            return not consecutive_loss
-        except:
+        if not net_income_3y or len(net_income_3y) < 3:
+            logger.debug(f"  - 조건 10 (3년 연속적자): 데이터 부족 -> FAIL")
             return False
-    
+        consecutive_loss = self.calculator.check_consecutive_losses(net_income_3y)
+        passed = not consecutive_loss
+        logger.debug(f"  - 조건 10 (3년 연속적자): 3년 연속 적자 아님 -> {'PASS' if passed else 'FAIL'}")
+        return passed
+
     def _check_trading_value(self, trading_value, min_trading_value):
-        """조건 11: 거래대금"""
-        try:
-            return trading_value >= min_trading_value
-        except:
-            return False
-    
+        passed = trading_value >= min_trading_value
+        logger.debug(f"  - 조건 11 (거래대금): {trading_value/10**8:,.0f}억 >= {min_trading_value/10**8:,.0f}억 -> {'PASS' if passed else 'FAIL'}")
+        return passed
+
     def _check_roe(self, roe_avg_3y, min_roe_avg):
-        """조건 12: ROE 3년 평균"""
-        try:
-            if roe_avg_3y is None:
-                return False
-            return roe_avg_3y >= min_roe_avg
-        except:
+        if roe_avg_3y is None:
+            logger.debug(f"  - 조건 12 (ROE): 데이터 없음 -> FAIL")
             return False
-    
+        passed = roe_avg_3y >= min_roe_avg
+        logger.debug(f"  - 조건 12 (ROE): {roe_avg_3y:.2f}% >= {min_roe_avg}% -> {'PASS' if passed else 'FAIL'}")
+        return passed
+
     def _check_pbr(self, pbr, min_pbr):
-        """조건 13: PBR"""
-        try:
-            if pbr is None or pbr <= 0:
-                return False
-            return pbr >= min_pbr
-        except:
+        if pbr is None or pbr <= 0:
+            logger.debug(f"  - 조건 13 (PBR): {pbr} <= 0 또는 데이터 없음 -> FAIL")
             return False
-    
+        passed = pbr >= min_pbr
+        logger.debug(f"  - 조건 13 (PBR): {pbr:.2f} >= {min_pbr:.2f} -> {'PASS' if passed else 'FAIL'}")
+        return passed
+
     def _check_per(self, per, min_per):
-        """조건 14: PER"""
-        try:
-            if per is None or per <= 0:
-                return False
-            return per >= min_per
-        except:
+        if per is None or per <= 0:
+            logger.debug(f"  - 조건 14 (PER): {per} <= 0 또는 데이터 없음 -> FAIL")
             return False
-    
+        passed = per >= min_per
+        logger.debug(f"  - 조건 14 (PER): {per:.2f} >= {min_per:.2f} -> {'PASS' if passed else 'FAIL'}")
+        return passed
+
     def _check_dividend_yield(self, div_yield, min_div_yield):
-        """조건 15: 배당수익률"""
-        try:
-            if div_yield is None:
-                return False
-            return div_yield >= min_div_yield
-        except:
+        if div_yield is None:
+            logger.debug(f"  - 조건 15 (배당수익률): 데이터 없음 -> FAIL")
             return False
-    
+        passed = div_yield >= min_div_yield
+        logger.debug(f"  - 조건 15 (배당수익률): {div_yield:.2f}% >= {min_div_yield:.2f}% -> {'PASS' if passed else 'FAIL'}")
+        return passed
+
     def _check_pcr(self, pcr, min_pcr):
-        """조건 16: PCR"""
-        try:
-            if pcr is None or pcr <= 0:
-                return False
-            return pcr >= min_pcr
-        except:
+        if pcr is None or pcr <= 0:
+            logger.debug(f"  - 조건 16 (PCR): {pcr} <= 0 또는 데이터 없음 -> FAIL")
             return False
-    
+        passed = pcr >= min_pcr
+        logger.debug(f"  - 조건 16 (PCR): {pcr:.2f} >= {min_pcr:.2f} -> {'PASS' if passed else 'FAIL'}")
+        return passed
+
     def _check_psr(self, psr, min_psr):
-        """조건 17: PSR"""
-        try:
-            if psr is None or psr <= 0:
-                return False
-            return psr >= min_psr
-        except:
+        if psr is None or psr <= 0:
+            logger.debug(f"  - 조건 17 (PSR): {psr} <= 0 또는 데이터 없음 -> FAIL")
             return False
-    
+        passed = psr >= min_psr
+        logger.debug(f"  - 조건 17 (PSR): {psr:.2f} >= {min_psr:.2f} -> {'PASS' if passed else 'FAIL'}")
+        return passed
+
     def _check_fscore(self, fscore, min_fscore):
-        """조건 18: F-SCORE"""
-        try:
-            if fscore is None:
-                return False
-            return fscore >= min_fscore
-        except:
+        if fscore is None:
+            logger.debug(f"  - 조건 18 (F-SCORE): 데이터 없음 -> FAIL")
             return False
-    
+        passed = fscore >= min_fscore
+        logger.debug(f"  - 조건 18 (F-SCORE): {fscore} >= {min_fscore} -> {'PASS' if passed else 'FAIL'}")
+        return passed
+
     def _check_cb_bw(self, has_cb_bw):
-        """조건 19: CB/BW 미발행"""
-        return not has_cb_bw
-    
+        passed = not has_cb_bw
+        logger.debug(f"  - 조건 19 (CB/BW): 미발행 -> {'PASS' if passed else 'FAIL'}")
+        return passed
+
     def _check_paid_increase(self, has_paid_increase):
-        """조건 20: 유상증자 미실시"""
-        return not has_paid_increase
-    
+        passed = not has_paid_increase
+        logger.debug(f"  - 조건 20 (유상증자): 미실시 -> {'PASS' if passed else 'FAIL'}")
+        return passed
+
     def _check_major_shareholder(self, major_shareholder_ratio, min_major_shareholder_ratio):
-        """조건 21: 최대주주 지분율"""
-        try:
-            if major_shareholder_ratio is None:
-                return False
-            return major_shareholder_ratio >= min_major_shareholder_ratio
-        except:
+        if major_shareholder_ratio is None:
+            logger.debug(f"  - 조건 21 (최대주주): 데이터 없음 -> FAIL")
             return False
+        passed = major_shareholder_ratio >= min_major_shareholder_ratio
+        logger.debug(f"  - 조건 21 (최대주주): {major_shareholder_ratio:.2f}% >= {min_major_shareholder_ratio}% -> {'PASS' if passed else 'FAIL'}")
+        return passed
