@@ -52,9 +52,9 @@ class Logic:
                 result = Logic.task_start_screening.apply_async((strategy_id, execution_type))
                 return {'success': True, 'message': f'Celery 작업 시작: {result.id}'}
             else:
-                # Celery 미사용 시 동기 실행. bind=True이므로 첫 인자로 None을 전달.
-                result = Logic.task_start_screening(None, strategy_id, execution_type)
-                return result
+                # Celery 미사용 시 동기 실행 (apply 사용)
+                result = Logic.task_start_screening.apply(args=[strategy_id, execution_type])
+                return result.get() # 결과를 반환
         except Exception as e:
             logger.error(f"start_screening 오류: {str(e)}")
             logger.error(traceback.format_exc())
@@ -64,10 +64,9 @@ class Logic:
     def task_start_screening(self, strategy_id=None, execution_type='manual'):
         from .setup import PluginModelSetting
         from .strategies import get_strategy as get_strategy_func
-        from .model import StockScreeningResult, ScreeningHistory, FilterDetail
+        from .model import StockScreeningResult, ScreeningHistory
         from .logic_collector import DataCollector
         from .logic_calculator import Calculator
-        from .logic_notifier import Notifier
         
         start_time = time.time()
         history = None
@@ -76,7 +75,6 @@ class Logic:
         try:
             if strategy_id is None:
                 strategy_id = PluginModelSetting.get('default_strategy')
-                logger.debug(f"기본 전략으로 실행: {strategy_id}")
             
             strategy = get_strategy_func(strategy_id)
             if not strategy:
@@ -87,11 +85,7 @@ class Logic:
             history = ScreeningHistory(execution_date=datetime.now(), execution_type=execution_type, status='running', strategy_name=strategy_id)
             history.save()
             
-            dart_api_key = PluginModelSetting.get('dart_api_key')
-            if not dart_api_key:
-                raise ValueError("DART API Key가 설정되지 않았습니다.")
-            
-            collector = DataCollector(dart_api_key=dart_api_key)
+            collector = DataCollector(dart_api_key=PluginModelSetting.get('dart_api_key'))
             calculator = Calculator()
             
             logger.info("전체 종목 목록 수집 시작...")
@@ -117,32 +111,29 @@ class Logic:
                 try:
                     socketio.emit('7split_screening_progress', {'current': idx + 1, 'total': total_stocks}, namespace='/framework', broadcast=True)
                     
-                    logger.debug(f"[{code}] 데이터 수집 시작...")
                     stock_data = collector.get_all_data_for_ticker(code, strategy.required_data)
                     stock_data['name'] = name
-                    logger.debug(f"[{code}] 수집된 데이터: {stock_data}")
-
-                    logger.debug(f"[{code}] 지표 계산 시작...")
+                    
                     calculated_data = calculator.calculate_all_metrics(stock_data)
                     stock_data.update(calculated_data)
-                    logger.debug(f"[{code}] 계산된 지표: {calculated_data}")
 
-                    logger.debug(f"[{code}] 필터 적용 시작...")
                     passed, condition_details = strategy.apply_filters(stock_data)
-                    logger.debug(f"[{code}] 필터 결과: {'통과' if passed else '실패'}")
 
                     if passed:
                         passed_stocks_count += 1
 
-                    result_record = StockScreeningResult()
-                    # ... (save logic)
-                    result_record.save()
+                    result_record = StockScreeningResult.from_dict(stock_data, strategy_id, strategy.version, passed, condition_details)
+                    db.session.merge(result_record)
+                    
+                    if (idx + 1) % 100 == 0:
+                        db.session.commit()
 
                 except Exception as e:
                     logger.error(f"종목 {code} 처리 중 오류 발생: {e}")
                     logger.error(traceback.format_exc())
                     continue
             
+            db.session.commit()
             execution_time = time.time() - start_time
             history.passed_stocks = passed_stocks_count
             history.execution_time = execution_time
@@ -163,4 +154,4 @@ class Logic:
                 history.save()
             return {'success': False, 'message': error_msg}
     
-    # ... other methods
+    # ... (other methods like cleanup, scheduler_start, etc.)
